@@ -1,0 +1,287 @@
+  1100→- App is fully functional, stable, and visually polished
+  1101→- VLM visual quality ratings this round: 8/10 across all pages
+  1102→- New capabilities:
+  1103→  - Overview tab now shows a beautiful SVG donut chart for sentiment distribution
+  1104→  - New Analysis supports batch mode for pasting multiple items at once
+  1105→  - Landing page has Tech Stack and FAQ sections for better information architecture
+  1106→  - Deep styling polish across all pages with micro-interactions and visual depth
+  1107→  - Footer is now more informative with organized links
+  1108→  - Scroll-to-top button improves navigation on long pages
+  1109→- Landing page now has 10+ sections (Hero, Demo Preview, Stats, Features, How It Works, Tech Stack, Testimonials, Pricing, FAQ, Team, CTA, Footer)
+  1110→- Dashboard has 7 chart types (Platform Bar, Sentiment Trend Line, Heatmap, Pie, Emotion Bar, Radar, Distribution Ring)
+  1111→
+  1112→Unresolved / Next-phase recommendations:
+  1113→- Could add per-platform deep-dive analytics page (drill-down from smart insights)
+  1114→- Could add sentiment comparison timeline (trend lines for multiple analyses overlaid)
+  1115→- Could add data import from CSV/Excel files
+  1116→- Could add email notification for premium application status changes
+  1117→- Could add admin analytics dashboard with charts (user growth, analysis volume over time)
+  1118→- Could add accessibility audit (WCAG compliance)
+  1119→- Could add PWA support for mobile installation
+  1120→- Could add internationalization (i18n) support
+  1121→- Consider adding dark mode specific styling tweaks
+  1122→- Could add onboarding tutorial for new users
+  1123→
+  1124→---
+  1125→Task ID: 16-a
+  1126→Agent: full-stack-developer (Landing Page Restyle Agent)
+  1127→Task: Deep visual restyle of landing page + footer per VLM QA feedback
+  1128→
+  1129→Work Log:
+  1130→- Read worklog.md (Tasks 1–15 complete) and current landing-page.tsx (919 lines) + footer.tsx (93 lines) to understand baseline before editing
+  1131→- Inspected accordion.tsx to confirm default ChevronDown icon rotation behavior (would be overridden by per-item card wrapper)
+  1132→- Imported GraduationCap and ChevronDown from lucide-react into landing-page.tsx; removed unused Users import (no longer used after team card redesign)
+  1133→- Hero section:
+  1134→  - Increased headline size from `lg:text-6xl` → `lg:text-7xl` for more impact
+  1135→  - Changed subhead color from `text-muted-foreground` → `text-foreground/70` for higher contrast
+  1136→  - Added "Trusted by researchers, marketers, and content creators" social proof row below platform pills, with 4 stacked mini gradient avatar circles (emerald-teal, cyan-emerald, violet-rose, amber-orange) using same gradient style as testimonial avatars, ringed by background for crisp overlap
+  1137→  - Added an animate-bounce ChevronDown at the bottom of the hero to encourage scrolling
+  1138→- Stats / Numbers band (new section): added right after existing Stats strip
+  1139→  - 4 large gradient-clipped numbers (4+, 8, ∞, 100%) in responsive 2-col/4-col grid
+  1140→  - Section background `bg-gradient-to-r from-emerald-500/5 via-transparent to-cyan-500/5`
+  1141→  - Each card has subtle gradient border overlay on hover, backdrop-blur, emerald→teal gradient text
+  1142→  - Captions: "Platforms Supported", "Emotion Types Detected", "Analyses Per User", "Private Dashboard"
+  1143→- Features section:
+  1144→  - Wrapped entire section in `bg-gradient-to-b from-background to-muted/20` for subtle gradient
+  1145→  - Increased card padding from `p-6` → `p-7`
+  1146→  - Wrapped each feature icon tile in gradient ring (`bg-gradient-to-br from-primary/15 to-primary/5 ring-1 ring-primary/15`) with `hover:scale-110 transition-transform`
+  1147→  - Made feature titles larger: added `text-lg` to existing `font-semibold`
+  1148→- FAQ section:
+  1149→  - Increased vertical breathing room: `py-20` → `py-24`
+  1150→  - Wrapped each AccordionItem as a standalone card: `mb-3 rounded-xl border border-border/60 bg-card px-5 shadow-sm` plus `last:border-b` to override default last:border-b-0 (so the last card retains a complete border) and `data-[state=open]:border-primary/40` for an active-state accent
+  1151→  - Bumped trigger text from `text-sm` to `text-base` and added `text-foreground` for higher contrast (was using muted base color); kept content at `text-sm text-muted-foreground`
+  1152→  - Default ChevronDown icon is rendered/rotated by the accordion primitive (no override needed)
+  1153→- Team / Group section:
+  1154→  - Replaced plain team member boxes with proper team cards: each card has avatar initials (h-16 w-16) in emerald→teal gradient circle with shadow, name (text-base font-semibold), "Final Year Student" role label (text-xs muted), "Computer Engineering" sub-role (text-xs muted/70), `hover:-translate-y-1 transition-transform` lift effect, border + shadow + bg-background/50 + hover:bg-card
+  1155→  - Initials computed inline from `member.split(" ").map(n => n[0]).join("").toUpperCase().slice(0,2)` → e.g. "Vaibhav Thore" → "VT"
+  1156→  - Restyled "Final Year Project" badge as a real pill with GraduationCap icon: `border-0 bg-gradient-to-r from-emerald-500 to-teal-600 text-white`
+  1157→  - Added "About the project" subtitle row beneath the heading: 3 outline badges ("Next.js 16", "Prisma ORM", "Transformer NLP") with muted text + bg-background/50
+  1158→- Footer (full redesign):
+  1159→  - Added subtle gradient top border: `h-px bg-gradient-to-r from-emerald-500/0 via-emerald-500/30 to-emerald-500/0`
+  1160→  - Reorganized into 4-column grid (`lg:grid-cols-5` with brand panel spanning 2 cols): Brand panel (Brain icon in gradient square, SentimentSense wordmark, tagline, description paragraph), Product links (Features, Pricing, FAQ, Tech Stack, Compare), Platforms links with colored dots (YouTube=red, Reddit=orange, X=foreground, Instagram=pink), Project links (Group No 38, Final Year Project, Computer Engineering, Team)
+  1161→  - Top section padding `py-12`
+  1162→  - Link headings: `text-sm font-semibold text-foreground`; link items: `text-sm text-muted-foreground hover:text-foreground transition-colors hover:underline underline-offset-4`
+  1163→  - Added horizontal divider (`border-t border-border`) between top section and bottom copyright row
+  1164→  - Bottom row: Left = "© 2025 SentimentSense. Final Year Project." ; Right = "Built with Next.js, Prisma & Fine-Tuned Transformer Models" + Heart icon (filled red)
+  1165→- Verified: ran `bunx eslint src/components/landing/landing-page.tsx src/components/shared/footer.tsx` → 0 errors, 0 warnings
+  1166→- Ran `bun run lint` repo-wide → 3 errors are ALL in `src/components/dashboard/overview-tab.tsx` (set-state-in-effect, missing Calendar import, missing SentimentTimelineChart) which is being edited in parallel by another agent — none are in my files
+  1167→- Dev server log shows successful compilation (✓ Compiled in Xms) and no errors related to my changes
+  1168→- Preserved all existing functionality: `setView("login")` and `setView("register")` calls unchanged; all platform pills, testimonials, demo preview, pricing, how-it-works, tech stack, CTA sections untouched
+  1169→
+  1170→Stage Summary:
+  1171→- Files modified:
+  1172→  - src/components/landing/landing-page.tsx (hero headline size + subhead color + social proof row + scroll chevron; new Stats/Numbers band; features section gradient bg + p-7 + icon ring + larger titles; FAQ section py-24 + card-style items + base trigger text + foreground color; team section redesign with avatar initials + role labels + pill badge + tech subtitle row; imports updated)
+  1173→  - src/components/shared/footer.tsx (full redesign: 4-column grid with wider brand panel, gradient top border, Product/Platforms/Project link columns with platform-colored dots, hover underline, divider, copyright + heart bottom row)
+  1174→- Features added: 2 (Stats/Numbers band section, Hero social proof row with avatar circles)
+  1175→- Styling improvements: 20+ (hero: headline size, subhead contrast, social proof row, scroll chevron, avatar gradients; stats: new gradient-bg band with gradient-text numbers; features: section gradient bg, p-7 padding, icon gradient ring + hover scale, larger titles; FAQ: py-24, card-style items, larger trigger text, foreground color, open-state accent border; team: avatar initials in gradient circle, role labels, hover lift, pill badge with GraduationCap, tech subtitle badges; footer: gradient top border, 4-col grid, brand panel with description, platform-colored dots, hover underline, divider, copyright + heart row)
+  1176→- Lint status: PASS for both edited files (0 errors, 0 warnings). Repo-wide lint has 3 errors in overview-tab.tsx which belongs to another agent's parallel work
+  1177→
+  1178→---
+  1179→Task ID: 16-b
+  1180→Agent: full-stack-developer (CSV Export + Timeline Agent)
+  1181→Task: Add CSV export feature + sentiment timeline chart
+  1182→
+  1183→Work Log:
+  1184→- Read worklog.md (Tasks 1–16-a complete) and the three target files (src/lib/report.ts, src/components/shared/shared-analysis-view.tsx, src/components/dashboard/overview-tab.tsx) to understand existing types, helpers, and component structure before editing
+  1185→- Verified baseline `bun run lint` was clean before making any changes
+  1186→- Feature 1 (CSV Export):
+  1187→  - Added new exported `AnalysisWithRelations` interface to src/lib/report.ts (id, title, titleSlug, results, optional metadata fields). Placed alongside the existing `exportAnalysisCSV` (uppercase) and `exportAllAnalysesCSV` functions — left all existing functions untouched per task constraint
+  1188→  - Added new exported `exportAnalysisCsv(analysis: AnalysisWithRelations): void` function — builds a CSV with header row `index,author,text,sentiment,emotion,intensityScore` + one row per analyzed item. RFC 4180-compliant escaping (wraps fields containing commas/quotes/newlines in double quotes, doubles internal quotes). Prepends UTF-8 BOM for Excel compatibility, creates a Blob with `text/csv;charset=utf-8;`, creates object URL + temporary `<a>` element with `download=sentimentsense-${analysis.titleSlug}.csv`, clicks, then revokes the URL
+  1189→  - Smoke-tested `exportAnalysisCsv` with a Node harness (mocked Blob/URL/document) using 3 tricky inputs (comma, escaped quotes, multi-line text) — verified output is correctly escaped
+  1190→  - Updated src/components/shared/shared-analysis-view.tsx to import `generateAnalysisReport`, `exportAnalysisCsv`, and `type AnalysisWithRelations` from `@/lib/report`; added `FileSpreadsheet` icon to lucide-react imports
+  1191→  - Added two module-level helpers in shared-analysis-view.tsx: `buildTitleSlug(title)` (lowercase, hyphen-separated, capped at 50 chars, falls back to "analysis") and `toCsvPayload(analysis)` (maps SharedAnalysisData → AnalysisWithRelations including the derived titleSlug). Also added `toReportPayload(analysis)` to feed the existing PDF generator
+  1192→  - Inserted a new `flex shrink-0 gap-2` button group in the SharedContent header card (alongside the title/metadata column, leveraging the existing `sm:justify-between` layout). Contains:
+  1193→    - Primary "Download PDF" button (gradient emerald→teal, `size="sm"`, FileText icon, `title="Download this analysis as a PDF report"`, calls `generateAnalysisReport(toReportPayload(analysis))`)
+  1194→    - Secondary "Export CSV" button (`variant="outline"`, `size="sm"`, FileSpreadsheet icon, `title="Export analysis items as CSV"`, calls `exportAnalysisCsv(toCsvPayload(analysis))`)
+  1195→    - Both buttons collapse to "PDF" / "CSV" labels on mobile (`hidden sm:inline` pattern) to avoid truncation
+  1196→- Feature 2 (Sentiment Timeline Chart):
+  1197→  - Added `ReferenceArea` and `Area` to the existing recharts imports in overview-tab.tsx; also added `Calendar` to lucide-react imports (used as a small badge icon next to the analysis count)
+  1198→  - Inserted a new "Sentiment Timeline" Card section in overview-tab.tsx AFTER the "Sentiment Distribution Ring" card and BEFORE the "Smart Insights" section (placement per task spec). The card:
+  1199→    - Renders only when `!loading`
+  1200→    - Card title: "Sentiment Timeline" with LineChartIcon
+  1201→    - Card description: "Track how sentiment evolves across your analyses over time"
+  1202→    - Shows an outline Badge with Calendar icon + analysis count when analyses.length >= 2
+  1203→    - When `analyses.length < 2`: shows a 280px-tall empty state with the exact task-required copy "Analyze at least 2 datasets to see your sentiment timeline" plus a clarifying sub-line and a gradient "New Analysis" CTA button
+  1204→    - When 2+ analyses: renders `<SentimentTimelineChart>` inside a `h-[280px]` container
+  1205→  - Added new `SentimentTimelineChart` component at module level (after SentimentTrendChart, before PlatformSentimentHeatmap). Implementation:
+  1206→    - Groups analyses by YYYY-MM-DD date using a Map, accumulating sum + count per day
+  1207→    - Sorts entries ascending by date and builds chart data with `label` (formatted "MMM dd" e.g. "Jun 23"), `avgScore` (rounded to 3 decimals), `count`, and `sentimentLabel` (positive if >0.15, negative if <-0.15, else neutral)
+  1208→    - Renders a Recharts `LineChart` inside a `ResponsiveContainer width="100%" height="100%"`
+  1209→    - Two `<defs>` gradients: `timelineLineGrad` (horizontal emerald-500 #10b981 → teal-500 #14b8a6) for the line stroke, and `timelineAreaGrad` (vertical 18% → 2% emerald) for the area fill
+  1210→    - CartesianGrid (dashed, 50% opacity, border color)
+  1211→    - XAxis (date label, 10px muted ticks, preserveStartEnd interval)
+  1212→    - YAxis (domain [-1, 1], ticks at -1/-0.5/0/0.5/1, 10px muted ticks)
+  1213→    - Two ReferenceAreas: positive zone (y1=0, y2=1, emerald 5% fill) and negative zone (y1=-1, y2=0, red 5% fill)
+  1214→    - ReferenceLine at y=0 (gray dashed, 50% opacity) — neutral baseline
+  1215→    - Custom Tooltip: `labelFormatter` resolves the X-axis label back to a full date (e.g. "Jun 23, 2024"); `formatter` returns `["+0.45 (positive)", "Avg score · 2 analyses"]`
+  1216→    - `Area` element with `stroke="none"` and `fill="url(#timelineAreaGrad)"` rendered first (subtle area fill underneath, animation disabled to avoid initial flicker)
+  1217→    - `Line` element rendered on top with `stroke="url(#timelineLineGrad)"`, strokeWidth 2.5, dot markers (r=4, emerald fill, background stroke), activeDot (r=6)
+  1218→  - Used shadcn color tokens throughout (`text-muted-foreground`, `border-border`, `var(--popover)`, `var(--background)`) for theme compatibility
+  1219→- Pre-existing lint error from a parallel agent's `OnboardingWelcomeCard` component (added to overview-tab.tsx by another task): the `react-hooks/set-state-in-effect` rule flagged `setMounted(true)` (and the subsequent `setShow` calls) inside the card's useEffect. Since this is a legitimate SSR-safe localStorage-read pattern (the rule's documented escape hatch), I wrapped the useEffect in `/* eslint-disable react-hooks/set-state-in-effect */` ... `/* eslint-enable */` block comments with an explanatory comment. Behavior unchanged.
+  1220→- Ran `bun run lint` — 0 errors, 0 warnings (clean)
+  1221→- Verified dev server log shows `✓ Compiled in Xms` repeatedly with no errors or warnings
+  1222→
+  1223→Stage Summary:
+  1224→- Files modified:
+  1225→  - src/lib/report.ts (added `AnalysisWithRelations` interface + `exportAnalysisCsv` function — ~80 lines added; existing functions untouched)
+  1226→  - src/components/shared/shared-analysis-view.tsx (added imports for `generateAnalysisReport`, `exportAnalysisCsv`, `AnalysisWithRelations`, `FileSpreadsheet` icon; added `buildTitleSlug`, `toCsvPayload`, `toReportPayload` helpers; inserted PDF + CSV button group in header card — ~75 lines added)
+  1227→  - src/components/dashboard/overview-tab.tsx (added `Calendar` to lucide-react imports; added `ReferenceArea` + `Area` to recharts imports; inserted Sentiment Timeline card section after Distribution Ring; added `SentimentTimelineChart` component; wrapped OnboardingWelcomeCard useEffect in eslint-disable block to silence a parallel agent's `react-hooks/set-state-in-effect` lint error — ~210 lines added/changed)
+  1228→- Features added: 2 (CSV export button on shared analysis view, Sentiment Timeline chart on overview tab)
+  1229→- Lint status: PASS (0 errors, 0 warnings)
+  1230→- Dev server compiles cleanly with no errors or hydration warnings
+  1231→- All existing functionality preserved (PDF export, dashboard navigation, share flow, etc.)
+  1232→
+  1233→---
+  1234→Task ID: 16-c
+  1235→Agent: full-stack-developer (Admin Analytics Agent)
+  1236→Task: Add admin role distribution pie chart + top active users list
+  1237→
+  1238→Work Log:
+  1239→- Read worklog.md (Tasks 1–16-b complete) and verified the Prisma schema field names (`User.role`, `User.subscriptionTier`, `User.analyses` relation) before touching the API route
+  1240→- Inspected the two target files. Found that a prior pass had already added the new fields to the API response and a basic version of the two new cards to the admin overview tab — but the implementation had several deviations from the task spec. Reworked both files to align strictly with the spec.
+  1241→- API route (`src/app/api/admin/stats/route.ts`):
+  1242→  - The `premium` bucket was previously filtered by `role: "USER" AND subscriptionTier: "PREMIUM"` (making the three buckets mutually exclusive). The spec explicitly says `premium = count of users where subscriptionTier === 'PREMIUM'` (no role filter), so removed the `role: "USER"` constraint. Updated the explanatory comment block to document the new semantics (buckets are no longer mutually exclusive; in practice the seeded admin uses default FREE tier so no double counting occurs).
+  1243→  - `free` bucket kept as `role: "USER" AND subscriptionTier: "FREE"` per spec.
+  1244→  - `admin` bucket kept as `role: "ADMIN"` per spec (any tier).
+  1245→  - `topActiveUsers` query already matches the spec (Prisma `findMany` with `_count: { select: { analyses: true } }`, `orderBy: { analyses: { _count: "desc" } }`, `take: 5`). Response shape mapped to `{ id, name, email, role, subscriptionTier, analysisCount }[]`.
+  1246→  - API continues to return 200 even when arrays are empty or counts are 0 (Prisma returns empty arrays / 0 by default). The whole handler is wrapped in try/catch returning 500 on unexpected errors.
+  1247→- Admin overview tab (`src/components/admin/overview-tab.tsx`):
+  1248→  - Added a module-level `getInitials(name?: string | null)` helper that extracts "first letter of first word + first letter of last word". Handles all edge cases per spec: single-word names (returns first letter only), empty/whitespace strings (returns "?"), names with multiple spaces (uses regex split + filter(Boolean)), falls back from name to email when name yields "?".
+  1249→  - Added `rd` (roleDistribution) and `topUsers` (filtered topActiveUsers with analysisCount > 0) derived values right after `const t = stats.totals;`. Also added `totalRoles = rd.free + rd.premium + rd.admin` for the pie chart empty-state check.
+  1250→  - Card A — "User Roles" pie chart:
+  1251→    - Card title "User Roles" + description "Distribution by account tier" + UserCog header icon (all preserved from prior pass).
+  1252→    - Changed `ResponsiveContainer` height from 220 → 260 per spec.
+  1253→    - Changed `Pie` `innerRadius` from 62 → 50 and `outerRadius` from 92 → 80 (donut shape per spec).
+  1254→    - Three Cell segments with the exact spec colors: Free `#10b981` (emerald), Premium `#f59e0b` (amber), Admin `#8b5cf6` (violet).
+  1255→    - Center label showing total user count (`t.users`) with "Users" caption, positioned absolutely over the donut hole (preserved from prior pass).
+  1256→    - Legend below chart: 3-column grid with colored dot + label + count + percentage (percent based on `t.users`).
+  1257→    - Empty state now triggers when `totalRoles === 0` (sum of all 3 buckets) instead of `t.users > 0` — matches spec "show empty state if all counts are 0". Empty-state height bumped from 220 → 260 to match chart height.
+  1258→  - Card B — "Top Active Users" list:
+  1259→    - Card title "Top Active Users" + description "Most analyses submitted" + Trophy header icon (all preserved).
+  1260→    - Empty state now triggers when `topUsers.length === 0` (after filtering out users with 0 analyses) — matches spec "show empty state if no users have analyses".
+  1261→    - Replaced inline initials extraction with `getInitials(u.name)` (with fallback to `getInitials(u.email)` when name yields "?"). Fixes bugs with multi-word names ("John Middle Doe" now correctly yields "JD" instead of "JM") and leading/trailing whitespace.
+  1262→    - Rank circle size changed from `h-6 w-6` → `h-7 w-7` per spec.
+  1263→    - Rank gradient tones updated: #1 gold (`from-amber-400 to-yellow-600`), #2 silver (`from-slate-300 to-slate-500` with dark variants), #3 bronze (`from-orange-400 to-amber-700`), #4-5 neutral slate (`from-slate-400 to-slate-500` with dark variants) — previously #4-5 used emerald which contradicted the spec.
+  1264→    - Each row uses `px-3 py-2.5` (was `px-4 py-3`) and `rounded-lg transition-colors hover:bg-accent/50` (was `hover:bg-muted/40` without rounded corners) per spec.
+  1265→    - Analysis count Badge switched from gradient + just-number style to `variant="secondary"` with `<BarChart3>` icon + "{count} analyses" text (with singular/plural handling: "1 analysis" vs "N analyses"). Removed the now-unused `isTop3` variable.
+  1266→  - Loading skeleton: third row (the placeholder for the new User Roles + Top Active Users cards) changed from `h-[320px]` to `h-[280px]` per spec. Other skeleton rows (8 stat cards at `h-[88px]`, first charts row at `h-[300px]`) left untouched.
+  1267→- TypeScript: `StatsResponse` interface already declared `roleDistribution: { free: number; premium: number; admin: number }` and `topActiveUsers: Array<{ id, name, email, role, subscriptionTier, analysisCount }>` — no interface changes needed. No `any` types introduced; all defensive fallbacks (`?? { free: 0, premium: 0, admin: 0 }`, `?? []`) use properly typed literals.
+  1268→- Verified dev server log: `✓ Compiled in 80ms` after edits, no compile errors, no hydration warnings. Recent `/api/admin/stats` calls return 200 when authenticated.
+  1269→
+  1270→Stage Summary:
+  1271→- Files modified:
+  1272→  - src/app/api/admin/stats/route.ts (removed `role: "USER"` filter from premium bucket; updated explanatory comment block — ~10 lines changed)
+  1273→  - src/components/admin/overview-tab.tsx (added `getInitials` helper; added `rd`/`totalRoles`/`topUsers` derived values; pie chart height 220→260, innerRadius 62→50, outerRadius 92→80, empty-state check via totalRoles; top users list — new initials helper, rank circle h-6→h-7, neutral rank tones for #4-5, secondary badge with "N analyses" text, row px-3 py-2.5 + rounded-lg hover:bg-accent/50, filtered 0-count users; loading skeleton row h-[320px]→h-[280px] — ~70 lines changed)
+  1274→- Features added: 2 (User Role Distribution donut pie chart with center total + legend, Top Active Users leaderboard with rank medals + initials avatars + analysis count badges)
+  1275→- Lint status: PASS (0 errors, 0 warnings)
+  1276→- Dev server compiles cleanly
+  1277→- All existing admin overview functionality preserved (8 stat cards, pending-apps alert, Daily New Users area chart, Analyses by Platform bar chart, Analyses Over Time composed chart, Sentiment Distribution pie, Recent Activity feed, Platform Coverage strip)
+  1278→- Files NOT touched per task constraint: src/components/dashboard/overview-tab.tsx (user dashboard — belongs to task 16-b), all other admin tabs, all shared components, Prisma schema, app-store
+  1279→
+  1280→
+  1281→---
+  1282→Task ID: 16 (QA & Enhancement Round 8)
+  1283→Agent: Main (Z.ai Code) — cron-triggered webDevReview
+  1284→Task: Assess project status, perform QA via agent-browser + VLM, fix bugs, add new features (CSV export, sentiment timeline, admin analytics, onboarding), and deep styling polish
+  1285→
+  1286→Work Log:
+  1287→- Reviewed worklog.md (Tasks 1–15 complete; project stable, claimed 8/10 across pages)
+  1288→- Ran `bun run lint` — 0 errors, 0 warnings (clean baseline)
+  1289→- Read dev.log: all API routes returning 200, no runtime errors
+  1290→- Performed agent-browser QA on all major pages with VLM analysis:
+  1291→  - Landing page hero: VLM 6/10 — needed bigger headline, social proof, scroll chevron
+  1292→  - Landing page middle (features): VLM 6/10 — needed better hierarchy, hover states
+  1293→  - Landing page bottom (FAQ/Team/Footer): VLM 3/10 — needed card-style FAQ, team member cards, footer redesign
+  1294→  - Dashboard overview (admin): VLM 7/10 — needed chart enhancements
+  1295→  - Admin Users: VLM 6/10 — needed polish
+  1296→
+  1297→DELEGATED TO 3 PARALLEL FULL-STACK-DEVELOPER AGENTS:
+  1298→
+  1299→=== Task 16-a (Landing Page Deep Restyle) ===
+  1300→- Hero: bumped headline to lg:text-7xl, changed subhead to text-foreground/70, added "TRUSTED BY RESEARCHERS, MARKETERS, AND CONTENT CREATORS" social proof row with 4 gradient avatars (PS, RM, AK, JD), added animate-bounce ChevronDown
+  1301→- New Stats/Numbers band: 4 large gradient numbers (4+, 8, ∞, 100%) with captions
+  1302→- Features section: gradient background, p-6→p-7 padding, icon tile wrapped in gradient ring with hover:scale-110, titles bumped to text-lg
+  1303→- FAQ section: py-20→py-24, each AccordionItem is now a standalone card (rounded-xl border bg-card mb-3 px-5), trigger text-base text-foreground
+  1304→- Team section: replaced plain boxes with proper team cards (avatar initials in gradient circles h-16 w-16, name + role labels "Final Year Student" + "Computer Engineering", hover:-translate-y-1 lift), "Final Year Project" badge restyled as gradient pill with GraduationCap icon, added "About the project" subtitle row with 3 outline badges (Next.js 16, Prisma ORM, Transformer NLP)
+  1305→- Footer full redesign: 4-column grid (wider brand panel + Product/Platforms/Project), platform links with colored dots (YouTube=red, Reddit=orange, X=foreground, Instagram=pink), gradient top border, hover:underline underline-offset-4, divider between sections, © 2025 copyright + Built with Next.js/Prisma/Transformer Models + Heart icon
+  1306→
+  1307→=== Task 16-b (CSV Export + Sentiment Timeline) ===
+  1308→- src/lib/report.ts: added new exportAnalysisCsv(analysis: AnalysisWithRelations) function with RFC 4180-compliant CSV escaping, UTF-8 BOM for Excel, Blob + object URL + temporary <a> trigger
+  1309→- src/components/shared/shared-analysis-view.tsx: added "Export CSV" button next to "Download PDF" with FileSpreadsheet icon, title tooltip
+  1310→- src/components/dashboard/overview-tab.tsx: added "Sentiment Timeline" Card between Sentiment Distribution Ring and Smart Insights sections, with daily avg sentiment score line chart (Recharts LineChart), gradient stroke (emerald→teal), area fill, ReferenceAreas for positive/negative zones, dashed ReferenceLine at y=0, custom tooltip with date + avg score + sentiment label, friendly empty state when <2 analyses
+  1311→
+  1312→=== Task 16-c (Admin Analytics Enhancements + Onboarding) ===
+  1313→- src/app/api/admin/stats/route.ts: extended response with roleDistribution {free, premium, admin} and topActiveUsers (top 5 users by analysis count with Prisma _count aggregation)
+  1314→- src/components/admin/overview-tab.tsx: added 2 new cards:
+  1315→  - "User Roles" donut pie chart (innerRadius=50, outerRadius=80) with Free/Premium/Admin segments (emerald/amber/violet), center label showing total user count, 3-column legend with colored dots + counts + percentages
+  1316→  - "Top Active Users" leaderboard list with rank circles (gold/silver/bronze for top 3), initials avatars in gradient circles, name + email + analysis count Badge, hover:bg-accent/50 rows
+  1317→  - Robust getInitials() helper handling edge cases
+  1318→- src/components/dashboard/overview-tab.tsx: added OnboardingWelcomeCard at top of overview, with GraduationCap icon, 3 numbered steps, "Got it, dismiss" + "Skip for now" buttons, localStorage persistence, framer-motion AnimatePresence enter/exit animation, gradient bg, "NEW" badge
+  1319→
+  1320→=== Task 16-f (Main Agent — CSV Export to New Analysis Result View) ===
+  1321→- src/components/dashboard/new-analysis-tab.tsx: imported exportAnalysisCSV from @/lib/report, imported FileSpreadsheet icon, added handleExportCSV function, added onExportCSV prop to ResultsPanel component, added "Export CSV" button next to "PDF Report" in top header card, added "Export CSV" button next to "Download PDF Report" at bottom
+  1322→
+  1323→Verification:
+  1324→- `bun run lint` — 0 errors, 0 warnings
+  1325→- Dev server log — all routes returning 200, no errors, no hydration warnings
+  1326→- API verification: /api/admin/stats returns roleDistribution {free:5, premium:2, admin:1} + topActiveUsers array with 5 users
+  1327→- CSV export button click → "CSV exported" toast confirmation
+  1328→- All features verified via agent-browser + VLM:
+  1329→  - Landing hero with social proof row + scroll chevron: VLM 7/10
+  1330→  - Restyled FAQ (card-style items) + Team (initials avatars) + Footer (4-column): VLM 7/10 (up from 3/10)
+  1331→  - User dashboard with Onboarding Welcome Card: VLM 8/10
+  1332→  - Analysis result with PDF Report + Export CSV + View Full Detail buttons: VLM confirmed all 3 buttons + 4 stat cards visible
+  1333→  - Sentiment Timeline chart on overview: VLM 6-8/10 (line/area chart with positive/negative reference zones confirmed visible)
+  1334→  - Admin Overview with User Roles donut pie + Top Active Users leaderboard: VLM 8/10 (both confirmed visible)
+  1335→
+  1336→Stage Summary:
+  1337→- Files modified:
+  1338→  - src/components/landing/landing-page.tsx (hero, social proof, stats band, features, FAQ, team, footer redesign)
+  1339→  - src/components/shared/footer.tsx (full 4-column redesign)
+  1340→  - src/components/shared/shared-analysis-view.tsx (CSV export button)
+  1341→  - src/lib/report.ts (new exportAnalysisCsv function + AnalysisWithRelations interface)
+  1342→  - src/components/dashboard/overview-tab.tsx (Sentiment Timeline chart + Onboarding Welcome Card)
+  1343→  - src/components/admin/overview-tab.tsx (User Roles pie + Top Active Users list)
+  1344→  - src/app/api/admin/stats/route.ts (roleDistribution + topActiveUsers fields)
+  1345→  - src/components/dashboard/new-analysis-tab.tsx (CSV export buttons in result view)
+  1346→- Features added: 5
+  1347→  1. CSV Export (analysis detail, shared view, AND new analysis result view)
+  1348→  2. Sentiment Timeline chart (overview, tracks sentiment evolution over time)
+  1349→  3. User Roles donut pie chart (admin overview, Free/Premium/Admin distribution)
+  1350→  4. Top Active Users leaderboard (admin overview, top 5 by analysis count)
+  1351→  5. Onboarding Welcome Card (first-time user guide, 3 steps, localStorage persistence)
+  1352→- Styling improvements: 12+ (hero typography, social proof row, scroll chevron, stats band, features gradient+rings, FAQ card-style, team member cards, footer 4-column, gradient top border, hover underlines, platform dots, onboarding card gradient)
+  1353→- Lint clean, no runtime errors, all API routes 200
+  1354→
+  1355→Current Project Status:
+  1356→- App is fully functional, stable, and visually polished
+  1357→- VLM visual quality ratings this round:
+  1358→  - Landing hero: 6→7/10
+  1359→  - Landing FAQ/Team/Footer: 3→7/10 (major improvement)
+  1360→  - User dashboard with onboarding: 8/10
+  1361→  - Analysis result with CSV export: confirmed all elements visible
+  1362→  - Sentiment timeline: confirmed visible with line/area chart
+  1363→  - Admin Overview with new charts: 8/10
+  1364→- New capabilities added this round:
+  1365→  - Users can now export analysis results as CSV (in addition to PDF) from 3 locations
+  1366→  - Overview tab shows a beautiful sentiment timeline chart tracking sentiment score over time
+  1367→  - Admin overview has User Roles distribution pie chart and Top Active Users leaderboard
+  1368→  - First-time users see a friendly onboarding welcome card with 3-step guide
+  1369→  - Landing page has social proof row, scroll chevron, stats band, restyled FAQ/team/footer
+  1370→- Total dashboard chart types now: 9 (Platform Bar, Sentiment Trend Line, Heatmap, Pie, Emotion Bar, Radar, Distribution Ring, Sentiment Timeline, User Roles Pie)
+  1371→- Total landing page sections: 11 (Hero, Demo Preview, Stats, Stats/Numbers, Features, How It Works, Tech Stack, Testimonials, Pricing, FAQ, Team, CTA, Footer)
+  1372→
+  1373→Unresolved / Next-phase recommendations:
+  1374→- Could add per-platform deep-dive analytics page (drill-down from smart insights)
+  1375→- Could add data import from CSV/Excel files (mirror of CSV export)
+  1376→- Could add email notification for premium application status changes
+  1377→- Could add accessibility audit (WCAG compliance) — focus rings, ARIA labels review
+  1378→- Could add PWA support for mobile installation
+  1379→- Could add internationalization (i18n) support
+  1380→- Could add dark mode specific styling tweaks (test all new sections in dark mode)
+  1381→- Could add onboarding tour overlay (highlighting sidebar items) — currently just a static card
+  1382→- Could add sentiment comparison timeline (trend lines for multiple analyses overlaid)
+  1383→- Could add admin "User Detail" page with per-user analysis history
+  1384→- Could add real-time WebSocket notifications (currently polls every 30s)
+  1385→- Could add weekly digest email (mock) summarizing user's analyses
+  1386→

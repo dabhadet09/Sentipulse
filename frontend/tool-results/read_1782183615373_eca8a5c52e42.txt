@@ -1,0 +1,806 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useState } from "react";
+     4→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+     5→import { Button } from "@/components/ui/button";
+     6→import { Skeleton } from "@/components/ui/skeleton";
+     7→import { Badge } from "@/components/ui/badge";
+     8→import {
+     9→  Select,
+    10→  SelectContent,
+    11→  SelectItem,
+    12→  SelectTrigger,
+    13→  SelectValue,
+    14→} from "@/components/ui/select";
+    15→import {
+    16→  SentimentBadge,
+    17→  PlatformBadge,
+    18→  EmotionBadge,
+    19→} from "@/components/shared/badges";
+    20→import { SentimentGauge, SentimentPieChart, EmotionBarChart } from "@/components/shared/charts";
+    21→import { getPlatform, getSentiment, EMOTIONS } from "@/lib/constants";
+    22→import type { AnalysisResult } from "@/lib/analysis";
+    23→import { motion } from "framer-motion";
+    24→import {
+    25→  RadarChart,
+    26→  PolarGrid,
+    27→  PolarAngleAxis,
+    28→  PolarRadiusAxis,
+    29→  Radar,
+    30→  Legend,
+    31→  ResponsiveContainer,
+    32→  Tooltip,
+    33→} from "recharts";
+    34→import {
+    35→  GitCompare,
+    36→  TrendingUp,
+    37→  TrendingDown,
+    38→  Minus,
+    39→  ArrowRight,
+    40→  Sparkles,
+    41→  Loader2,
+    42→  Trophy,
+    43→  Scale,
+    44→  ArrowLeftRight,
+    45→} from "lucide-react";
+    46→
+    47→interface AnalysisListItem {
+    48→  id: string;
+    49→  platform: string;
+    50→  contentType: string;
+    51→  title: string;
+    52→  overallSentiment: string;
+    53→  sentimentScore: number;
+    54→  itemCount: number;
+    55→  isPremium: boolean;
+    56→  createdAt: string;
+    57→}
+    58→
+    59→interface FullAnalysis extends AnalysisListItem {
+    60→  results: AnalysisResult;
+    61→}
+    62→
+    63→export function CompareTab() {
+    64→  const [analyses, setAnalyses] = useState<AnalysisListItem[]>([]);
+    65→  const [loading, setLoading] = useState(true);
+    66→  const [idA, setIdA] = useState<string>("");
+    67→  const [idB, setIdB] = useState<string>("");
+    68→  const [fullA, setFullA] = useState<FullAnalysis | null>(null);
+    69→  const [fullB, setFullB] = useState<FullAnalysis | null>(null);
+    70→  const [loadingDetail, setLoadingDetail] = useState(false);
+    71→
+    72→  useEffect(() => {
+    73→    let cancelled = false;
+    74→    (async () => {
+    75→      try {
+    76→        const res = await fetch("/api/analyses");
+    77→        if (!res.ok) return;
+    78→        const data = await res.json();
+    79→        if (cancelled) return;
+    80→        setAnalyses(data.analyses || []);
+    81→        // Auto-select first two
+    82→        if (data.analyses?.length >= 2) {
+    83→          setIdA(data.analyses[0].id);
+    84→          setIdB(data.analyses[1].id);
+    85→        } else if (data.analyses?.length === 1) {
+    86→          setIdA(data.analyses[0].id);
+    87→        }
+    88→      } catch {
+    89→        // silent
+    90→      } finally {
+    91→        if (!cancelled) setLoading(false);
+    92→      }
+    93→    })();
+    94→    return () => {
+    95→      cancelled = true;
+    96→    };
+    97→  }, []);
+    98→
+    99→  useEffect(() => {
+   100→    if (!idA && !idB) return;
+   101→    setLoadingDetail(true);
+   102→    let cancelled = false;
+   103→    (async () => {
+   104→      const promises: Promise<FullAnalysis | null>[] = [];
+   105→      if (idA) {
+   106→        promises.push(
+   107→          fetch(`/api/analyses/${idA}`)
+   108→            .then((r) => (r.ok ? r.json() : null))
+   109→            .then((d) => d?.analysis || null)
+   110→            .catch(() => null)
+   111→        );
+   112→      } else {
+   113→        promises.push(Promise.resolve(null));
+   114→      }
+   115→      if (idB) {
+   116→        promises.push(
+   117→          fetch(`/api/analyses/${idB}`)
+   118→            .then((r) => (r.ok ? r.json() : null))
+   119→            .then((d) => d?.analysis || null)
+   120→            .catch(() => null)
+   121→        );
+   122→      } else {
+   123→        promises.push(Promise.resolve(null));
+   124→      }
+   125→      const [a, b] = await Promise.all(promises);
+   126→      if (!cancelled) {
+   127→        setFullA(a);
+   128→        setFullB(b);
+   129→        setLoadingDetail(false);
+   130→      }
+   131→    })();
+   132→    return () => {
+   133→      cancelled = true;
+   134→    };
+   135→  }, [idA, idB]);
+   136→
+   137→  if (loading) {
+   138→    return (
+   139→      <div className="space-y-6">
+   140→        <Skeleton className="h-10 w-64" />
+   141→        <div className="grid gap-4 lg:grid-cols-2">
+   142→          <Skeleton className="h-96" />
+   143→          <Skeleton className="h-96" />
+   144→        </div>
+   145→      </div>
+   146→    );
+   147→  }
+   148→
+   149→  if (analyses.length < 2) {
+   150→    return (
+   151→      <div className="space-y-6">
+   152→        <div>
+   153→          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+   154→            <GitCompare className="h-6 w-6 text-primary" />
+   155→            Compare Analyses
+   156→          </h1>
+   157→          <p className="mt-1 text-sm text-muted-foreground">
+   158→            Side-by-side comparison of two sentiment analyses to identify trends and differences.
+   159→          </p>
+   160→        </div>
+   161→        <Card className="border-dashed">
+   162→          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+   163→            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+   164→              <Scale className="h-7 w-7 text-primary" />
+   165→            </div>
+   166→            <h3 className="font-semibold">Need at least 2 analyses to compare</h3>
+   167→            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+   168→              You currently have {analyses.length} analysis{analyses.length === 1 ? "" : "es"}.
+   169→              Run one more analysis to unlock the comparison view.
+   170→            </p>
+   171→          </CardContent>
+   172→        </Card>
+   173→      </div>
+   174→    );
+   175→  }
+   176→
+   177→  return (
+   178→    <div className="space-y-6">
+   179→      {/* Header */}
+   180→      <motion.div
+   181→        initial={{ opacity: 0, y: 8 }}
+   182→        animate={{ opacity: 1, y: 0 }}
+   183→        transition={{ duration: 0.3 }}
+   184→      >
+   185→        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+   186→          <GitCompare className="h-6 w-6 text-primary" />
+   187→          Compare Analyses
+   188→        </h1>
+   189→        <p className="mt-1 text-sm text-muted-foreground">
+   190→          Side-by-side comparison of two sentiment analyses to identify trends and differences.
+   191→        </p>
+   192→      </motion.div>
+   193→
+   194→      {/* Selectors */}
+   195→      <Card className="relative overflow-hidden border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.02] to-teal-500/[0.02]">
+   196→        <CardContent className="p-5">
+   197→          <div className="grid items-end gap-4 sm:grid-cols-[1fr_auto_1fr]">
+   198→            <div className="space-y-2">
+   199→              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+   200→                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[9px] font-bold text-white">
+   201→                  A
+   202→                </span>
+   203→                Analysis A
+   204→              </label>
+   205→              <Select value={idA} onValueChange={setIdA}>
+   206→                <SelectTrigger>
+   207→                  <SelectValue placeholder="Select first analysis" />
+   208→                </SelectTrigger>
+   209→                <SelectContent className="max-h-72">
+   210→                  {analyses.map((a) => (
+   211→                    <SelectItem key={a.id} value={a.id} disabled={a.id === idB}>
+   212→                      {a.title} ({getPlatform(a.platform).label})
+   213→                    </SelectItem>
+   214→                  ))}
+   215→                </SelectContent>
+   216→              </Select>
+   217→            </div>
+   218→            <div className="flex flex-col items-center gap-1.5 pb-1">
+   219→              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+   220→                Swap
+   221→              </span>
+   222→              <Button
+   223→                size="icon"
+   224→                variant="outline"
+   225→                onClick={() => {
+   226→                  const tmp = idA;
+   227→                  setIdA(idB);
+   228→                  setIdB(tmp);
+   229→                }}
+   230→                disabled={!idA || !idB}
+   231→                className="h-9 w-9 rounded-full border-emerald-500/30 bg-background text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700 dark:text-emerald-400"
+   232→                aria-label="Swap A and B"
+   233→                title="Swap A and B"
+   234→              >
+   235→                <ArrowLeftRight className="h-4 w-4" />
+   236→              </Button>
+   237→            </div>
+   238→            <div className="space-y-2">
+   239→              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400">
+   240→                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-teal-500 text-[9px] font-bold text-white">
+   241→                  B
+   242→                </span>
+   243→                Analysis B
+   244→              </label>
+   245→              <Select value={idB} onValueChange={setIdB}>
+   246→                <SelectTrigger>
+   247→                  <SelectValue placeholder="Select second analysis" />
+   248→                </SelectTrigger>
+   249→                <SelectContent className="max-h-72">
+   250→                  {analyses.map((a) => (
+   251→                    <SelectItem key={a.id} value={a.id} disabled={a.id === idA}>
+   252→                      {a.title} ({getPlatform(a.platform).label})
+   253→                    </SelectItem>
+   254→                  ))}
+   255→                </SelectContent>
+   256→              </Select>
+   257→            </div>
+   258→          </div>
+   259→        </CardContent>
+   260→      </Card>
+   261→
+   262→      {loadingDetail ? (
+   263→        <div className="grid gap-4 lg:grid-cols-2">
+   264→          <Skeleton className="h-[500px]" />
+   265→          <Skeleton className="h-[500px]" />
+   266→        </div>
+   267→      ) : fullA && fullB ? (
+   268→        <ComparisonView a={fullA} b={fullB} />
+   269→      ) : (
+   270→        <Card className="border-dashed">
+   271→          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+   272→            Select two analyses above to see the comparison.
+   273→          </CardContent>
+   274→        </Card>
+   275→      )}
+   276→    </div>
+   277→  );
+   278→}
+   279→
+   280→function ComparisonView({ a, b }: { a: FullAnalysis; b: FullAnalysis }) {
+   281→  const scoreDiff = b.sentimentScore - a.sentimentScore;
+   282→  const itemDiff = b.itemCount - a.itemCount;
+   283→
+   284→  // Determine winner
+   285→  const sentimentWinner = scoreDiff > 0 ? "B" : scoreDiff < 0 ? "A" : "tie";
+   286→  const itemWinner = itemDiff > 0 ? "B" : itemDiff < 0 ? "A" : "tie";
+   287→
+   288→  // Emotion comparison
+   289→  const allEmotions = Array.from(
+   290→    new Set([
+   291→      ...Object.keys(a.results.emotionDistribution),
+   292→      ...Object.keys(b.results.emotionDistribution),
+   293→    ])
+   294→  ).filter((e) => EMOTIONS[e]);
+   295→
+   296→  return (
+   297→    <motion.div
+   298→      initial={{ opacity: 0 }}
+   299→      animate={{ opacity: 1 }}
+   300→      transition={{ duration: 0.3 }}
+   301→      className="space-y-4"
+   302→    >
+   303→      {/* Summary comparison row */}
+   304→      <div className="grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
+   305→        <AnalysisHeader
+   306→          analysis={a}
+   307→          label="A"
+   308→          color="emerald"
+   309→          isWinner={sentimentWinner === "A"}
+   310→        />
+   311→        <div className="relative flex flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-border bg-gradient-to-br from-muted/40 to-muted/20 p-4 shadow-sm">
+   312→          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/[0.04] to-teal-500/[0.04]" />
+   313→          <span className="relative text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+   314→            vs
+   315→          </span>
+   316→          <div className="relative flex items-center gap-1">
+   317→            {scoreDiff > 0 ? (
+   318→              <TrendingUp className="h-4 w-4 text-emerald-500" />
+   319→            ) : scoreDiff < 0 ? (
+   320→              <TrendingDown className="h-4 w-4 text-red-500" />
+   321→            ) : (
+   322→              <Minus className="h-4 w-4 text-muted-foreground" />
+   323→            )}
+   324→            <span
+   325→              className={`text-sm font-bold tabular-nums ${
+   326→                scoreDiff > 0
+   327→                  ? "text-emerald-600 dark:text-emerald-400"
+   328→                  : scoreDiff < 0
+   329→                    ? "text-red-600 dark:text-red-400"
+   330→                    : ""
+   331→              }`}
+   332→            >
+   333→              {scoreDiff > 0 ? "+" : ""}
+   334→              {scoreDiff.toFixed(2)}
+   335→            </span>
+   336→          </div>
+   337→          <span className="relative text-[10px] text-muted-foreground">score delta</span>
+   338→          {sentimentWinner !== "tie" && (
+   339→            <Badge
+   340→              variant="outline"
+   341→              className="relative mt-1 gap-1 border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400"
+   342→            >
+   343→              <Trophy className="h-2.5 w-2.5" />
+   344→              {sentimentWinner === "A" ? "A leads" : "B leads"}
+   345→            </Badge>
+   346→          )}
+   347→        </div>
+   348→        <AnalysisHeader
+   349→          analysis={b}
+   350→          label="B"
+   351→          color="teal"
+   352→          isWinner={sentimentWinner === "B"}
+   353→        />
+   354→      </div>
+   355→
+   356→      {/* Score gauges side by side */}
+   357→      <Card>
+   358→        <CardHeader>
+   359→          <CardTitle className="flex items-center gap-2 text-base">
+   360→            <Scale className="h-4 w-4 text-primary" />
+   361→            Sentiment Score Comparison
+   362→          </CardTitle>
+   363→          <CardDescription>Overall sentiment score for each analysis</CardDescription>
+   364→        </CardHeader>
+   365→        <CardContent>
+   366→          <div className="grid gap-4 sm:grid-cols-2">
+   367→            <div className="space-y-2">
+   368→              <div className="flex items-center justify-between">
+   369→                <Badge className="bg-emerald-500/10 text-emerald-600">A</Badge>
+   370→                {sentimentWinner === "A" && (
+   371→                  <Badge className="gap-1 bg-amber-500/10 text-amber-600">
+   372→                    <Trophy className="h-3 w-3" />
+   373→                    More positive
+   374→                  </Badge>
+   375→                )}
+   376→              </div>
+   377→              <SentimentGauge score={a.sentimentScore} height={160} />
+   378→            </div>
+   379→            <div className="space-y-2">
+   380→              <div className="flex items-center justify-between">
+   381→                <Badge className="bg-teal-500/10 text-teal-600">B</Badge>
+   382→                {sentimentWinner === "B" && (
+   383→                  <Badge className="gap-1 bg-amber-500/10 text-amber-600">
+   384→                    <Trophy className="h-3 w-3" />
+   385→                    More positive
+   386→                  </Badge>
+   387→                )}
+   388→              </div>
+   389→              <SentimentGauge score={b.sentimentScore} height={160} />
+   390→            </div>
+   391→          </div>
+   392→        </CardContent>
+   393→      </Card>
+   394→
+   395→      {/* Sentiment distribution comparison */}
+   396→      <Card>
+   397→        <CardHeader>
+   398→          <CardTitle className="text-base">Sentiment Distribution</CardTitle>
+   399→          <CardDescription>Positive / Negative / Neutral breakdown</CardDescription>
+   400→        </CardHeader>
+   401→        <CardContent>
+   402→          <div className="grid gap-4 sm:grid-cols-2">
+   403→            <div className="space-y-2">
+   404→              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600">Analysis A</Badge>
+   405→              <SentimentPieChart distribution={a.results.sentimentDistribution} height={200} />
+   406→            </div>
+   407→            <div className="space-y-2">
+   408→              <Badge variant="outline" className="bg-teal-500/10 text-teal-600">Analysis B</Badge>
+   409→              <SentimentPieChart distribution={b.results.sentimentDistribution} height={200} />
+   410→            </div>
+   411→          </div>
+   412→        </CardContent>
+   413→      </Card>
+   414→
+   415→      {/* Emotion comparison table */}
+   416→      <Card>
+   417→        <CardHeader>
+   418→          <CardTitle className="text-base">Emotion Breakdown</CardTitle>
+   419→          <CardDescription>Item count per emotion, compared</CardDescription>
+   420→        </CardHeader>
+   421→        <CardContent>
+   422→          <div className="overflow-x-auto">
+   423→            <table className="w-full text-sm">
+   424→              <thead>
+   425→                <tr className="border-b border-border">
+   426→                  <th className="py-2 text-left font-medium text-muted-foreground">Emotion</th>
+   427→                  <th className="py-2 text-right font-medium text-muted-foreground">
+   428→                    <span className="inline-flex items-center gap-1">
+   429→                      <Badge className="bg-emerald-500/10 text-emerald-600 text-[10px]">A</Badge>
+   430→                    </span>
+   431→                  </th>
+   432→                  <th className="py-2 text-right font-medium text-muted-foreground">
+   433→                    <span className="inline-flex items-center gap-1">
+   434→                      <Badge className="bg-teal-500/10 text-teal-600 text-[10px]">B</Badge>
+   435→                    </span>
+   436→                  </th>
+   437→                  <th className="py-2 text-right font-medium text-muted-foreground">Difference</th>
+   438→                </tr>
+   439→              </thead>
+   440→              <tbody>
+   441→                {allEmotions.map((emotion) => {
+   442→                  const countA = a.results.emotionDistribution[emotion] || 0;
+   443→                  const countB = b.results.emotionDistribution[emotion] || 0;
+   444→                  const diff = countB - countA;
+   445→                  const e = EMOTIONS[emotion];
+   446→                  return (
+   447→                    <tr key={emotion} className="border-b border-border/50">
+   448→                      <td className="py-2">
+   449→                        <span className="inline-flex items-center gap-1.5">
+   450→                          <span>{e.emoji}</span>
+   451→                          <span className="font-medium">{e.label}</span>
+   452→                        </span>
+   453→                      </td>
+   454→                      <td className="py-2 text-right tabular-nums">{countA}</td>
+   455→                      <td className="py-2 text-right tabular-nums">{countB}</td>
+   456→                      <td className="py-2 text-right tabular-nums">
+   457→                        {diff === 0 ? (
+   458→                          <span className="text-muted-foreground">—</span>
+   459→                        ) : (
+   460→                          <span className={diff > 0 ? "text-teal-600" : "text-emerald-600"}>
+   461→                            {diff > 0 ? "+" : ""}
+   462→                            {diff}
+   463→                          </span>
+   464→                        )}
+   465→                      </td>
+   466→                    </tr>
+   467→                  );
+   468→                })}
+   469→              </tbody>
+   470→            </table>
+   471→          </div>
+   472→        </CardContent>
+   473→      </Card>
+   474→
+   475→      {/* Emotion Radar Chart - visual comparison */}
+   476→      <Card>
+   477→        <CardHeader>
+   478→          <div className="flex items-center justify-between gap-3">
+   479→            <div>
+   480→              <CardTitle className="flex items-center gap-2 text-base">
+   481→                <Sparkles className="h-4 w-4 text-primary" />
+   482→                Emotion Radar
+   483→              </CardTitle>
+   484→              <CardDescription>
+   485→                Multi-dimensional emotion profile overlay
+   486→              </CardDescription>
+   487→            </div>
+   488→            <div className="flex items-center gap-2">
+   489→              <Badge variant="outline" className="gap-1.5 bg-emerald-500/10 text-[10px] text-emerald-600 dark:text-emerald-400">
+   490→                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+   491→                A
+   492→              </Badge>
+   493→              <Badge variant="outline" className="gap-1.5 bg-teal-500/10 text-[10px] text-teal-600 dark:text-teal-400">
+   494→                <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+   495→                B
+   496→              </Badge>
+   497→            </div>
+   498→          </div>
+   499→        </CardHeader>
+   500→        <CardContent>
+   501→          <EmotionRadarChart a={a} b={b} />
+   502→        </CardContent>
+   503→      </Card>
+   504→
+   505→      {/* Key metrics comparison */}
+   506→      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   507→        <ComparisonMetric
+   508→          label="Items Analyzed"
+   509→          valueA={a.itemCount}
+   510→          valueB={b.itemCount}
+   511→          winner={itemWinner}
+   512→          format="int"
+   513→        />
+   514→        <ComparisonMetric
+   515→          label="Positive %"
+   516→          valueA={a.results.sentimentDistribution.positive}
+   517→          valueB={b.results.sentimentDistribution.positive}
+   518→          winner={a.results.sentimentDistribution.positive > b.results.sentimentDistribution.positive ? "A" : b.results.sentimentDistribution.positive > a.results.sentimentDistribution.positive ? "B" : "tie"}
+   519→          format="pct"
+   520→        />
+   521→        <ComparisonMetric
+   522→          label="Negative %"
+   523→          valueA={a.results.sentimentDistribution.negative}
+   524→          valueB={b.results.sentimentDistribution.negative}
+   525→          winner={a.results.sentimentDistribution.negative < b.results.sentimentDistribution.negative ? "A" : b.results.sentimentDistribution.negative < a.results.sentimentDistribution.negative ? "B" : "tie"}
+   526→          format="pct"
+   527→          invertColor
+   528→        />
+   529→        <ComparisonMetric
+   530→          label="Dominant Emotion"
+   531→          valueA={a.results.dominantEmotion}
+   532→          valueB={b.results.dominantEmotion}
+   533→          winner="tie"
+   534→          format="emotion"
+   535→        />
+   536→      </div>
+   537→
+   538→      {/* AI Summaries side by side */}
+   539→      <Card>
+   540→        <CardHeader>
+   541→          <CardTitle className="flex items-center gap-2 text-base">
+   542→            <Sparkles className="h-4 w-4 text-primary" />
+   543→            AI Summaries
+   544→          </CardTitle>
+   545→        </CardHeader>
+   546→        <CardContent>
+   547→          <div className="grid gap-4 sm:grid-cols-2">
+   548→            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+   549→              <Badge className="mb-2 bg-emerald-500/10 text-emerald-600">Analysis A</Badge>
+   550→              <p className="text-sm leading-relaxed">{a.results.summary}</p>
+   551→            </div>
+   552→            <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-4">
+   553→              <Badge className="mb-2 bg-teal-500/10 text-teal-600">Analysis B</Badge>
+   554→              <p className="text-sm leading-relaxed">{b.results.summary}</p>
+   555→            </div>
+   556→          </div>
+   557→        </CardContent>
+   558→      </Card>
+   559→    </motion.div>
+   560→  );
+   561→}
+   562→
+   563→function EmotionRadarChart({ a, b }: { a: FullAnalysis; b: FullAnalysis }) {
+   564→  // Build radar data: one row per emotion, with A and B columns
+   565→  const emotions = Array.from(
+   566→    new Set([
+   567→      ...Object.keys(a.results.emotionDistribution),
+   568→      ...Object.keys(b.results.emotionDistribution),
+   569→    ])
+   570→  ).filter((e) => EMOTIONS[e]);
+   571→
+   572→  const data = emotions.map((emotion) => ({
+   573→    emotion: EMOTIONS[emotion].label,
+   574→    emoji: EMOTIONS[emotion].emoji,
+   575→    A: a.results.emotionDistribution[emotion] || 0,
+   576→    B: b.results.emotionDistribution[emotion] || 0,
+   577→  }));
+   578→
+   579→  if (data.length === 0) {
+   580→    return (
+   581→      <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+   582→        No emotion data to display
+   583→      </div>
+   584→    );
+   585→  }
+   586→
+   587→  // Compute max for axis scaling
+   588→  const maxVal = Math.max(
+   589→    ...data.flatMap((d) => [d.A, d.B]),
+   590→    1
+   591→  );
+   592→
+   593→  return (
+   594→    <div className="space-y-2">
+   595→      <ResponsiveContainer width="100%" height={320}>
+   596→        <RadarChart data={data} margin={{ top: 16, right: 30, left: 30, bottom: 16 }}>
+   597→          <PolarGrid stroke="var(--border)" />
+   598→          <PolarAngleAxis
+   599→            dataKey="emotion"
+   600→            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+   601→          />
+   602→          <PolarRadiusAxis
+   603→            angle={90}
+   604→            domain={[0, Math.ceil(maxVal * 1.1)]}
+   605→            tick={{ fontSize: 9, fill: "var(--muted-foreground)" }}
+   606→            axisLine={false}
+   607→          />
+   608→          <Radar
+   609→            name="A"
+   610→            dataKey="A"
+   611→            stroke="#10b981"
+   612→            strokeWidth={2}
+   613→            fill="#10b981"
+   614→            fillOpacity={0.25}
+   615→            dot={{ r: 3, fill: "#10b981", strokeWidth: 1, stroke: "#fff" }}
+   616→          />
+   617→          <Radar
+   618→            name="B"
+   619→            dataKey="B"
+   620→            stroke="#14b8a6"
+   621→            strokeWidth={2}
+   622→            fill="#14b8a6"
+   623→            fillOpacity={0.2}
+   624→            dot={{ r: 3, fill: "#14b8a6", strokeWidth: 1, stroke: "#fff" }}
+   625→          />
+   626→          <Tooltip
+   627→            contentStyle={{
+   628→              background: "var(--popover)",
+   629→              border: "1px solid var(--border)",
+   630→              borderRadius: "0.75rem",
+   631→              color: "var(--popover-foreground)",
+   632→              fontSize: "12px",
+   633→              boxShadow: "0 10px 30px -10px rgba(0,0,0,0.2)",
+   634→            }}
+   635→            formatter={(value: number, name: string) => [
+   636→              `${value} item${value === 1 ? "" : "s"}`,
+   637→              name,
+   638→            ]}
+   639→          />
+   640→          <Legend
+   641→            wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
+   642→            iconType="circle"
+   643→          />
+   644→        </RadarChart>
+   645→      </ResponsiveContainer>
+   646→      <p className="text-center text-[10px] text-muted-foreground">
+   647→        Larger area = more items exhibiting that emotion. Overlapping regions
+   648→        show emotional similarity between the two analyses.
+   649→      </p>
+   650→    </div>
+   651→  );
+   652→}
+   653→
+   654→function AnalysisHeader({
+   655→  analysis,
+   656→  label,
+   657→  color,
+   658→  isWinner,
+   659→}: {
+   660→  analysis: FullAnalysis;
+   661→  label: string;
+   662→  color: "emerald" | "teal";
+   663→  isWinner?: boolean;
+   664→}) {
+   665→  const platform = getPlatform(analysis.platform);
+   666→  const Icon = platform.icon;
+   667→  const colorClasses = {
+   668→    emerald: "from-emerald-500 to-emerald-600",
+   669→    teal: "from-teal-500 to-teal-600",
+   670→  };
+   671→  return (
+   672→    <Card
+   673→      className={`relative overflow-hidden transition-all ${
+   674→        isWinner
+   675→          ? color === "emerald"
+   676→            ? "border-emerald-500/50 shadow-md shadow-emerald-500/10"
+   677→            : "border-teal-500/50 shadow-md shadow-teal-500/10"
+   678→          : ""
+   679→      }`}
+   680→    >
+   681→      <div className={`h-1.5 bg-gradient-to-r ${colorClasses[color]}`} />
+   682→      {isWinner && (
+   683→        <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-600 ring-1 ring-inset ring-amber-500/30 dark:text-amber-400">
+   684→          <Trophy className="h-2.5 w-2.5" />
+   685→          Leader
+   686→        </div>
+   687→      )}
+   688→      <CardContent className="p-4">
+   689→        <div className="mb-3 flex items-center justify-between">
+   690→          <Badge className={`bg-${color}-500/10 text-${color}-600`}>{label}</Badge>
+   691→          <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${colorClasses[color]} text-white`}>
+   692→            <Icon className="h-4 w-4" />
+   693→          </div>
+   694→        </div>
+   695→        <h3 className="line-clamp-2 font-semibold leading-tight">{analysis.title}</h3>
+   696→        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+   697→          <PlatformBadge platform={analysis.platform} />
+   698→          <SentimentBadge sentiment={analysis.overallSentiment} />
+   699→        </div>
+   700→        <p className="mt-2 text-xs text-muted-foreground">
+   701→          {analysis.itemCount} items • {new Date(analysis.createdAt).toLocaleDateString()}
+   702→        </p>
+   703→      </CardContent>
+   704→    </Card>
+   705→  );
+   706→}
+   707→
+   708→function ComparisonMetric({
+   709→  label,
+   710→  valueA,
+   711→  valueB,
+   712→  winner,
+   713→  format,
+   714→  invertColor,
+   715→}: {
+   716→  label: string;
+   717→  valueA: number | string;
+   718→  valueB: number | string;
+   719→  winner: "A" | "B" | "tie";
+   720→  format: "int" | "pct" | "emotion";
+   721→  invertColor?: boolean;
+   722→}) {
+   723→  function formatVal(v: number | string) {
+   724→    if (format === "int") return String(v);
+   725→    if (format === "pct") return `${v}%`;
+   726→    if (format === "emotion") {
+   727→      const e = EMOTIONS[v as string];
+   728→      return e ? `${e.emoji} ${e.label}` : String(v);
+   729→    }
+   730→    return String(v);
+   731→  }
+   732→
+   733→  // Winner gets a colored ring + crown
+   734→  const aIsWinner = winner === "A";
+   735→  const bIsWinner = winner === "B";
+   736→
+   737→  return (
+   738→    <Card
+   739→      className={`relative overflow-hidden transition-all ${
+   740→        aIsWinner
+   741→          ? "border-emerald-500/40 bg-emerald-500/[0.03]"
+   742→          : bIsWinner
+   743→            ? "border-teal-500/40 bg-teal-500/[0.03]"
+   744→            : ""
+   745→      }`}
+   746→    >
+   747→      <CardContent className="p-4">
+   748→        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+   749→          {label}
+   750→        </p>
+   751→        <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+   752→          <div className="relative text-center">
+   753→            {aIsWinner && (
+   754→              <Trophy className="absolute -top-1 left-1/2 h-3 w-3 -translate-x-1/2 text-amber-500" />
+   755→            )}
+   756→            <p
+   757→              className={`text-lg font-bold tabular-nums transition-colors ${
+   758→                aIsWinner
+   759→                  ? "text-emerald-600 dark:text-emerald-400"
+   760→                  : "text-foreground"
+   761→              }`}
+   762→            >
+   763→              {formatVal(valueA)}
+   764→            </p>
+   765→            <p className="text-[10px] text-muted-foreground">A</p>
+   766→          </div>
+   767→          <div className="flex flex-col items-center">
+   768→            <span
+   769→              className={`text-[9px] font-semibold uppercase ${
+   770→                aIsWinner
+   771→                  ? "text-emerald-500"
+   772→                  : bIsWinner
+   773→                    ? "text-teal-500"
+   774→                    : "text-muted-foreground"
+   775→              }`}
+   776→            >
+   777→              {aIsWinner ? "←" : bIsWinner ? "→" : "="}
+   778→            </span>
+   779→            <ArrowRight className="h-3 w-3 text-muted-foreground/60" />
+   780→          </div>
+   781→          <div className="relative text-center">
+   782→            {bIsWinner && (
+   783→              <Trophy className="absolute -top-1 left-1/2 h-3 w-3 -translate-x-1/2 text-amber-500" />
+   784→            )}
+   785→            <p
+   786→              className={`text-lg font-bold tabular-nums transition-colors ${
+   787→                bIsWinner
+   788→                  ? "text-teal-600 dark:text-teal-400"
+   789→                  : "text-foreground"
+   790→              }`}
+   791→            >
+   792→              {formatVal(valueB)}
+   793→            </p>
+   794→            <p className="text-[10px] text-muted-foreground">B</p>
+   795→          </div>
+   796→        </div>
+   797→        {invertColor && (
+   798→          <p className="mt-2 text-center text-[10px] text-muted-foreground">
+   799→            Lower is better
+   800→          </p>
+   801→        )}
+   802→      </CardContent>
+   803→    </Card>
+   804→  );
+   805→}
+   806→

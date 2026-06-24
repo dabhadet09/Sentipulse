@@ -1,0 +1,45 @@
+# Web Framework
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Database
+motor
+pymongo
+
+# Authentication
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
+
+# ML & NLP
+torch
+transformers
+datasets
+scikit-learn
+numpy
+pandas
+accelerate
+evaluate
+tokenizers
+
+# Data fetching (platform APIs / scraping helpers)
+httpx
+youtube-transcript-api
+praw
+tweepy
+
+# Report generation
+reportlab
+matplotlib
+seaborn
+
+# Utilities
+python-dotenv
+pydantic
+pydantic-settings
+email-validator
+
+# Jupyter (ML notebook — optional)
+jupyter
+ipykernel

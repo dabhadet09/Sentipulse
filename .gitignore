@@ -1,0 +1,26 @@
+# Sensitive Environments & Data
+backend/.env
+frontend/.env
+mongodb_data/
+
+# Python Virtual Environments & Caches
+backend/venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Node.js
+node_modules/
+dist/
+.next/
+
+# IDE / OS generated files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

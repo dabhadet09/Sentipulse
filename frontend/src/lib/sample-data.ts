@@ -1,0 +1,167 @@
+// Realistic sample datasets for each platform to demo the analysis engine.
+// Each dataset mimics the kind of content you'd extract from a real post/livestream.
+
+export interface SampleDataset {
+  id: string;
+  platform: string;
+  contentType: string;
+  title: string;
+  description: string;
+  items: { text: string; author: string }[];
+}
+
+export const SAMPLE_DATASETS: SampleDataset[] = [
+  {
+    id: "yt-tech-review",
+    platform: "youtube",
+    contentType: "video",
+    title: "iPhone 16 Pro Max Review - Is It Worth It?",
+    description: "Comments from a popular tech review video (1.2M views)",
+    items: [
+      { author: "@TechFan2024", text: "This review was incredibly thorough and honest. Finally someone who doesn't just praise everything. The camera comparison at 8:30 was eye-opening." },
+      { author: "@SarahVlogs", text: "I'm so disappointed with the battery life this year. My 15 Pro Max lasted way longer. Not worth upgrading at all." },
+      { author: "@gamerkid99", text: "The gaming performance is absolutely insane! Genshin Impact runs at 120fps with zero lag. Best phone I've ever owned!" },
+      { author: "@BudgetBuyer", text: "Way too expensive for what you get. Apple is just greedy at this point. Same phone every year with a new chip." },
+      { author: "@PhotographerPro", text: "The new 5x telephoto lens is a game changer for wildlife photography. Crisp details even at max zoom. Love it!" },
+      { author: "@mike_smith", text: "Meh, my Android does all this for half the price. Don't see the hype honestly." },
+      { author: "@CreativeStudio", text: "Editing 4K video in LumaFusion is buttery smooth now. The A18 Pro chip is a beast. Worth every penny for creators." },
+      { author: "@disappointed_fan", text: "I hate that they removed the SIM tray. What am I supposed to do when traveling? Terrible decision Apple." },
+      { author: "@HappyCustomer", text: "Upgraded from iPhone 12 and the difference is night and day. So fast, so smooth. Camera is incredible. Highly recommend!" },
+      { author: "@RealistRandy", text: "It's a good phone but not revolutionary. If you have a 14 or 15, skip this one. Wait for the 17." },
+      { author: "@AppReviewer", text: "The AI features are actually useful, unlike Samsung's gimmicks. Writing Tools and Clean Up work surprisingly well." },
+      { author: "@angrycustomer", text: "Phone arrived with a scratched screen and Apple refused to replace it. Worst customer service experience ever." },
+      { author: "@DailyDriver", text: "Been using it for 2 weeks. Battery easily lasts all day with heavy use. Best iPhone yet no question." },
+      { author: "@ skeptic_one", text: "These reviews are always sponsored. Can't trust any of them anymore. Do your own research people." },
+      { author: "@StudentLife", text: "Saved up for 6 months to buy this and I have zero regrets. The display is gorgeous and it never lags." },
+      { author: "@TechSavvyMom", text: "Bought one for my teenager and she absolutely loves the camera for her social media. Great investment." },
+      { author: "@FrustratedUser", text: "iOS 18 is so buggy on this device. Apps crash constantly. Apple needs to fix this ASAP." },
+      { author: "@DesignNerd", text: "The titanium finish feels premium and looks stunning. Apple's industrial design is unmatched." },
+      { author: "@ValueHunter", text: "Got a great trade-in deal, ended up paying only $400. Totally worth it for the upgrades." },
+      { author: "@casual_viewer", text: "Good review, very balanced. Helped me decide to wait another year. Thanks for the honesty!" },
+    ],
+  },
+  {
+    id: "yt-livestream-gaming",
+    platform: "youtube",
+    contentType: "livestream",
+    title: "Live Q&A + Gameplay Stream - Chat Reactions",
+    description: "Real-time chat messages captured during a 2-hour gaming livestream (Premium)",
+    items: [
+      { author: "Viewer_x42", text: "LETS GOOOO that play was insane!!!" },
+      { author: "QuietWatcher", text: "The stream quality is amazing today, no lag at all." },
+      { author: "FanBoy99", text: "Best streamer on YouTube fr fr" },
+      { author: "TrollMaster", text: "skill issue tbh, that was terrible" },
+      { author: "NewSub", text: "Just subscribed! Love the energy here" },
+      { author: "OldFan", text: "Remember when you had 100 subs? Crazy how far you've come" },
+      { author: "AngryGamer", text: "WHY DID YOU DO THAT omg so frustrating to watch" },
+      { author: "ChillVibes", text: "This is so relaxing to watch after work, thanks for streaming" },
+      { author: "Donator500", text: "Donated $50! Keep up the great content bro" },
+      { author: "BoredViewer", text: "kinda boring today ngl, do something different" },
+      { author: "HypeFan", text: "CLUTCH!!! WHAT A PLAY IM SCREAMING" },
+      { author: "ConcernedFan", text: "you look tired, take a break man, health first" },
+      { author: "SpamBot123", text: "check out my channel guys!!!! sub4sub" },
+      { author: "LoyalFan", text: "been here since day 1, never missed a stream" },
+      { author: "ConfusedNewb", text: "what game is this? looks cool" },
+      { author: "ProGamer", text: "your aim has improved so much, keep grinding" },
+      { author: "SadViewer", text: "miss the old streams, content feels different now" },
+      { author: "ExcitedFan", text: "THE HYPE IS REAL LETS WIN THIS" },
+      { author: "CriticalThinker", text: "honestly the strategy was questionable but entertaining" },
+      { author: "GratefulFan", text: "your streams helped me through depression, thank you" },
+    ],
+  },
+  {
+    id: "reddit-discussion",
+    platform: "reddit",
+    contentType: "discussion",
+    title: "What's your honest opinion on remote work vs office?",
+    description: "Comments from r/cscareerquestions discussion (8.4k upvotes)",
+    items: [
+      { author: "u/dev_throwaway_99", text: "Remote work changed my life. I save 2 hours of commute daily, spend more time with family, and honestly I'm MORE productive. Never going back to office." },
+      { author: "u/ManagerMike", text: "As a manager, remote has been a disaster for my team. Collaboration is harder, junior devs don't learn by osmosis, and team morale is lower. Hybrid is the answer." },
+      { author: "u/junior_dev_2024", text: "I started my career remote and I feel like I'm missing out on mentorship. Hard to learn when you can't just turn around and ask a senior a quick question." },
+      { author: "u/senior_engineer", text: "30 years in the industry. The best code I've written was in office with a whiteboard and colleagues. Remote is fine for execution but terrible for innovation." },
+      { author: "u/wfh_convert", text: "Was skeptical at first but after 3 years remote I could never go back. The flexibility is worth more than any salary increase. My mental health has never been better." },
+      { author: "u/office_lover", text: "I genuinely love the office. Free coffee, good WiFi, actual human interaction. My apartment is tiny and depressing. Office is my happy place." },
+      { author: "u/burnt_out", text: "Remote work destroyed my work-life balance. I can never disconnect. At least in the office when I leave, I'm done. Now I'm always 'on'." },
+      { author: "u/parent_dev", text: "Remote let me see my kids grow up. I eat lunch with them, catch their school events. You can't put a price on that. Office mandates are anti-family." },
+      { author: "u/startup_founder", text: "We tried remote for 2 years. Productivity was fine but culture died. Ended up going hybrid 3 days in office. Best decision we made." },
+      { author: "u/analytics_nerd", text: "The data actually shows remote workers are 13% more productive on average. The office push is driven by real estate interests, not worker benefit." },
+      { author: "u/introvert_power", text: "Office small talk is my personal hell. Remote work let me focus on actual work instead of pretending to be social. I'm so much happier." },
+      { author: "u/missing_colleagues", text: "I miss my work wife. We used to grab coffee every day and vent. Zoom doesn't replace that connection. Work friendships matter for retention." },
+      { author: "u/commute_hater", text: "Spending $400/month and 20 hours/week commuting was insane. Remote gave me my life back. Anyone advocating for return to office hates workers." },
+      { author: "u/fair_point", text: "Both have merits. The problem is companies forcing one-size-fits-all. Let people choose based on their role and preferences. Trust your employees." },
+      { author: "u/new_grad_struggle", text: "Graduated 2023, been remote since. I don't know what normal office culture even is. Feel like I'm missing a foundational career experience." },
+      { author: "u/digital_nomad", text: "Remote let me travel the world while working. Currently typing this from Bali. Best decision ever. Office people don't know what they're missing." },
+      { author: "u/frustrated_lead", text: "Leading a remote team is 3x harder. Miscommunications daily, async delays everything, and I spend my life in meetings that could be a hallway chat." },
+      { author: "u/loyal_employee", text: "My company went fully remote and never looked back. 5 years later, record profits, low turnover, happy employees. It CAN work with the right culture." },
+      { author: "u/skeptic_realist", text: "Remote works for experienced ICs. It's terrible for juniors, managers, and collaborative creative work. Stop pretending it's universally better." },
+      { author: "u/grateful_remote", text: "Disabled and remote work gave me a career I never thought possible. The office was never accessible for me. Don't take this away from people like me." },
+    ],
+  },
+  {
+    id: "x-trending-topic",
+    platform: "x",
+    contentType: "post",
+    title: "AI replacing jobs - trending discussion (#TechLayoffs)",
+    description: "Top replies to a viral X post about AI and employment (240k impressions)",
+    items: [
+      { author: "@FutureOfWork", text: "AI won't replace you. A person using AI will. Adapt or get left behind. The choice is yours." },
+      { author: "@LayoffVictim", text: "Lost my job of 12 years to 'AI optimization'. 50 of us gone in one email. This isn't progress, it's greed." },
+      { author: "@TechOptimist", text: "Every technological revolution destroyed jobs and created better ones. The internet didn't end employment. Neither will AI. Calm down." },
+      { author: "@ScaredWorker", text: "I'm terrified. I have a mortgage and kids. Every day I wonder if I'll have a job next month. The anxiety is crushing." },
+      { author: "@AILearnDaily", text: "Spent 6 months learning to build with AI tools. Now I'm 3x more valuable at work. The threat is real but so is the opportunity." },
+      { author: "@BlueCollarPride", text: "Trades are AI-proof. Everyone laughed at me for becoming an electrician. Who's laughing now? My job requires hands, not algorithms." },
+      { author: "@StartupFounder", text: "We replaced 3 copywriters with 1 person + AI. Output went UP. Quality stayed same. This is the new reality whether you like it or not." },
+      { author: "@EthicsMatters", text: "The problem isn't AI. It's that productivity gains go to shareholders, not workers. We need UBI and stronger labor laws NOW." },
+      { author: "@DoNothingGov", text: "Politicians have no plan for this. Zero. They don't even understand what's happening. We're sleepwalking into a crisis." },
+      { author: "@OldSchoolDev", text: "Been coding 25 years. Seen 'AI will replace devs' claims come and go. It's a tool, not a replacement. Junior devs, don't panic." },
+      { author: "@CorporateGreedy", text: "Companies don't care about you. Never did. AI is just the latest excuse to cut costs and boost executive bonuses. Unionize." },
+      { author: "@HopefulGenZ", text: "I'm 22 and honestly excited. AI lets me build things I never could alone. The old model was broken anyway. Bring on the future." },
+      { author: "@RealistTake", text: "Some jobs will go, new ones will come. The transition period is painful for those affected. We need retraining programs, not panic." },
+      { author: "@AngryProgrammer", text: "Stop telling us to 'learn to code' and now 'learn AI'. Moving goalposts forever while capital wins every time. Sick of it." },
+      { author: "@QuietObserver", text: "Notice how it's always knowledge workers panicking. Manual labor was automated for decades and nobody cared. Now it's your turn." },
+      { author: "@SmallBizOwner", text: "AI saved my small business. I can't afford a marketing team but ChatGPT writes all my content. Leveling the playing field." },
+      { author: "@DebtSlave", text: "I have $80k in student loans for a degree that's now useless thanks to AI. Where's my relief? This system is broken." },
+      { author: "@PragmaticDev", text: "The real skill isn't fighting AI, it's knowing where it fails. Creativity, empathy, complex problem solving - those stay human for now." },
+      { author: "@LateCapitalism", text: "We have the tech to give everyone a good life with less work. Instead we'll have mass unemployment and billionaires. Late stage capitalism." },
+      { author: "@ForwardThinker", text: "Imagine 20 hour work weeks because AI does the drudge work. That COULD be the future. But only if we fight for it collectively." },
+    ],
+  },
+  {
+    id: "instagram-reel-viral",
+    platform: "instagram",
+    contentType: "reel",
+    title: "'Day in my life as a software engineer' - viral reel (2.1M likes)",
+    description: "Comments from a trending Instagram reel about tech life",
+    items: [
+      { author: "@coding_queen", text: "This is SO accurate 😂 the debugging part had me dying" },
+      { author: "@wannabe_dev", text: "I want to become a software engineer so bad but I'm scared it's too hard. This makes it look fun though!" },
+      { author: "@ex_tech_bro", text: "Quit my 6 figure job after 3 years. Burnout is real. The money isn't worth your mental health y'all." },
+      { author: "@cs_student", text: "Watching this during my data structures exam prep instead of studying 🫠 relatable content" },
+      { author: "@recruiter_sarah", text: "If any devs here are job hunting, my company is hiring! DM me 😊 great WLB and fully remote" },
+      { author: "@salty_nurse", text: "Must be nice making 6 figures to sit and type. I save lives for half that. Make it make sense." },
+      { author: "@self_taught", text: "No degree, self taught, 2 years in and making 95k. It's possible! Don't let anyone tell you need college" },
+      { author: "@mom_of_dev", text: "My son is a software engineer and I'm so proud. He worked so hard to get there 🥹" },
+      { author: "@realist_rachel", text: "Cool reel but this glamorizes the job. It's meetings, tickets, and fixing other people's bad code mostly" },
+      { author: "@grateful_dev", text: "Best career decision ever. 4 years in, fully remote, love my team. Not every company is toxic!" },
+      { author: "@imposter_syndrome", text: "I feel like a fraud every single day. Does this ever go away? 5 YOE and still terrified they'll find out I know nothing" },
+      { author: "@coffee_addict", text: "The 4 cups of coffee before noon is painfully real ☕" },
+      { author: "@angry_bootcamper", text: "Did a $20k bootcamp, been job hunting 8 months, 500 applications. This industry is brutal for newbies" },
+      { author: "@non_tech_partner", text: "This explains so much about my partner's life lol. The staring at screen for hours part 😅" },
+      { author: "@future_founder", text: "Learning to code so I can build my own startup. These reels keep me motivated 🔥" },
+      { author: "@underpaid_dev", text: "Make 55k in a MCOL city with 3 YOE. Watching these reels make me realize how underpaid I am. Time to job hunt" },
+      { author: "@accessible_tech", text: "Love that more people are seeing tech as accessible. It changed my whole life coming from a low income family" },
+      { author: "@gen_z_worker", text: "Gen Z sees through the grindset. We want work life balance and meaningful work. Tech can offer that if you set boundaries" },
+      { author: "@mentor_mike", text: "Mentoring junior devs is the best part of the job. Watching them grow is so rewarding. Pay it forward seniors!" },
+      { author: "@dreaming_big", text: "One day I'll make a reel like this about MY dev job. For now I'm learning and grinding 💪🏽" },
+    ],
+  },
+];
+
+export function getSampleById(id: string) {
+  return SAMPLE_DATASETS.find((s) => s.id === id);
+}
+
+export function getSamplesByPlatform(platform: string) {
+  return SAMPLE_DATASETS.filter((s) => s.platform === platform);
+}

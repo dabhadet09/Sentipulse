@@ -1,0 +1,1313 @@
+"use client";
+
+import { useAppStore } from "@/store/app-store";
+import { Footer } from "@/components/shared/footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { PLATFORMS, GROUP_INFO } from "@/lib/constants";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Brain,
+  Youtube,
+  MessageCircle,
+  Twitter,
+  Instagram,
+  TrendingUp,
+  Smile,
+  Frown,
+  Meh,
+  ShieldCheck,
+  Zap,
+  Download,
+  BarChart3,
+  Sparkles,
+  ArrowRight,
+  Lock,
+  Quote,
+  Star,
+  Activity,
+  Cpu,
+  Globe,
+  Database,
+  Palette,
+  HelpCircle,
+  GraduationCap,
+  ChevronDown,
+} from "lucide-react";
+import {
+  motion,
+  useInView,
+  useMotionValue,
+  useTransform,
+  animate,
+} from "framer-motion";
+import { useEffect, useRef } from "react";
+
+export function LandingPage() {
+  const setView = useAppStore((s) => s.setView);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background" role="document">
+      {/* Navbar */}
+      <header role="banner" className="sticky top-0 z-50 border-b border-border/60 glass">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20" aria-hidden="true">
+              <Brain className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="text-lg font-bold tracking-tight">
+                Sentiment<span className="text-primary">Sense</span>
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setView("login")}
+              className="hidden sm:inline-flex focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+            >
+              Sign In
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setView("register")}
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+            >
+              Get Started
+              <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main role="main" className="flex-1">
+        {/* Hero */}
+        <section className="relative overflow-hidden grid-bg" aria-label="Hero">
+          {/* Subtle gradient fade to background */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" aria-hidden="true" />
+
+          {/* Floating gradient orbs — emerald, teal, cyan, mint */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[40rem] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl animate-float"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-20 top-32 h-72 w-72 rounded-full bg-emerald-500/15 blur-3xl animate-float-slow"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-0 top-20 h-80 w-80 rounded-full bg-teal-500/12 blur-3xl animate-float-reverse"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-cyan-500/12 blur-3xl animate-float"
+          />
+
+          {/* Animated shimmer line sweeping across the hero */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-1/3 h-px overflow-hidden"
+          >
+            <div className="absolute inset-y-0 w-1/3 animate-shimmer-sweep bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
+          </div>
+
+          <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="mx-auto max-w-3xl text-center"
+            >
+              <Badge className="mb-6 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Sparkles className="h-3 w-3" aria-hidden="true" />
+                Powered by Fine-Tuned Transformer Models
+              </Badge>
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-7xl">
+                Understand What People{" "}
+                <span className="gradient-text">Really Feel</span>
+              </h1>
+              <p className="mx-auto mt-6 max-w-2xl text-lg text-foreground/70">
+                Advanced AI-powered sentiment and emotion analysis across
+                YouTube, Reddit, X, and Instagram. Turn social media noise into
+                actionable insights with transformer-based NLP.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Button
+                  size="lg"
+                  onClick={() => setView("register")}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90 sm:w-auto focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                >
+                  Start Analyzing Free
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setView("login")}
+                  className="w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                >
+                  Sign In
+                </Button>
+              </div>
+              <p className="mt-4 text-xs text-muted-foreground">
+                No credit card required • Free tier includes all platforms
+              </p>
+            </motion.div>
+
+            {/* Platform pills */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="mt-14 flex flex-wrap items-center justify-center gap-3"
+            >
+              {Object.values(PLATFORMS).map((p) => {
+                const Icon = p.icon;
+                return (
+                  <div
+                    key={p.id}
+                    className={`flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium shadow-sm ${p.bgClass}`}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    {p.label}
+                  </div>
+                );
+              })}
+            </motion.div>
+
+            {/* Trusted by social proof row */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="mt-10 flex flex-col items-center gap-3"
+            >
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Join 50+ researchers &amp; marketers
+              </p>
+              <div className="flex items-center -space-x-2" role="group" aria-label="Sample users">
+                {[
+                  { grad: "from-emerald-500 to-teal-600", initials: "PS" },
+                  { grad: "from-cyan-500 to-emerald-600", initials: "RM" },
+                  { grad: "from-violet-500 to-rose-500", initials: "AK" },
+                  { grad: "from-amber-500 to-orange-500", initials: "JD" },
+                ].map((avatar, i) => (
+                  <div
+                    key={i}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${avatar.grad} text-[10px] font-semibold text-white ring-2 ring-background`}
+                    aria-label={`User ${avatar.initials}`}
+                  >
+                    <span className="sr-only">User {avatar.initials}</span>
+                    <span aria-hidden="true">{avatar.initials}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Scroll-down chevron */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="mt-12 flex justify-center"
+              aria-hidden="true"
+            >
+              <ChevronDown className="h-6 w-6 animate-bounce text-muted-foreground" />
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Live Demo Preview */}
+        <DemoPreviewSection />
+
+        {/* Stats strip */}
+        <section className="border-y border-border bg-card/50">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 py-8 sm:px-6 lg:grid-cols-4 lg:px-8">
+            {[
+              { icon: Activity, label: "Platforms", value: "4+" },
+              { icon: Brain, label: "AI Model", value: "Transformer" },
+              { icon: Smile, label: "Emotions", value: "8 Types" },
+              { icon: Zap, label: "Real-time", value: "Live Stream" },
+            ].map((s) => (
+              <div key={s.label} className="text-center">
+                <s.icon className="mx-auto mb-2 h-5 w-5 text-primary" />
+                <div className="text-2xl font-bold">{s.value}</div>
+                <div className="text-xs text-muted-foreground">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Stats / Numbers band with animated count-up */}
+        <section className="relative overflow-hidden bg-gradient-to-r from-emerald-500/5 via-transparent to-cyan-500/5">
+          {/* Soft floating orbs in the background of the stats band */}
+          <div aria-hidden="true" className="pointer-events-none absolute -left-10 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full bg-emerald-500/10 blur-3xl animate-float-slow" />
+          <div aria-hidden="true" className="pointer-events-none absolute -right-10 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full bg-cyan-500/10 blur-3xl animate-float-reverse" />
+
+          <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+              {ANIMATED_STATS.map((stat, i) => (
+                <motion.div
+                  key={stat.caption}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.4, delay: i * 0.08 }}
+                  className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/50 p-5 text-center shadow-sm backdrop-blur transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
+                >
+                  {/* Gradient ring overlay on hover */}
+                  <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-transparent to-cyan-500/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <div className="relative">
+                    <div className="bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-5xl font-bold text-transparent transition-transform duration-300 group-hover:scale-110 sm:text-6xl">
+                      <StatValue value={stat.value} />
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground sm:text-sm">
+                      {stat.caption}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Features */}
+        <section className="bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent">
+          <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Everything you need to <span className="gradient-text">decode public sentiment</span>
+              </h2>
+              <p className="mt-4 text-muted-foreground">
+                From a single YouTube comment to a live stream of thousands of
+                messages — SentimentSense gives you the full picture.
+              </p>
+              <Badge className="mt-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Cpu className="h-3 w-3" aria-hidden="true" />
+                Powered by Fine-Tuned Transformer Model
+              </Badge>
+            </div>
+
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {FEATURES.map((f, i) => (
+                <motion.div
+                  key={f.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.05 }}
+                >
+                  <Card className="h-full border-border/60 transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+                    <CardContent className="p-7">
+                      <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary ring-1 ring-primary/15 transition-all hover:scale-110 hover:ring-2 hover:ring-emerald-500/30">
+                        <f.icon className="h-5 w-5" />
+                      </div>
+                      <h3 className="mb-2 text-lg font-semibold">{f.title}</h3>
+                      <p className="text-sm text-muted-foreground">{f.desc}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Platform Showcase */}
+        <section className="relative overflow-hidden border-y border-border bg-gradient-to-b from-muted/30 to-background">
+          {/* Subtle floating accent orbs */}
+          <div aria-hidden="true" className="pointer-events-none absolute -left-16 top-1/4 h-56 w-56 rounded-full bg-emerald-500/8 blur-3xl animate-float-slow" />
+          <div aria-hidden="true" className="pointer-events-none absolute -right-16 bottom-1/4 h-56 w-56 rounded-full bg-teal-500/8 blur-3xl animate-float-reverse" />
+
+          <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="mx-auto max-w-2xl text-center"
+            >
+              <Badge className="mb-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Globe className="h-3 w-3" aria-hidden="true" />
+                Multi-Platform Coverage
+              </Badge>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Analyze sentiment across{" "}
+                <span className="gradient-text">every major platform</span>
+              </h2>
+              <p className="mt-4 text-muted-foreground">
+                From YouTube comments to Reddit threads, X posts to Instagram
+                reels — SentimentSense unifies public emotion data from across
+                the social web into a single dashboard.
+              </p>
+            </motion.div>
+
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {PLATFORM_SHOWCASE.map((p, i) => {
+                const Icon = p.icon;
+                return (
+                  <motion.div
+                    key={p.name}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-40px" }}
+                    transition={{ duration: 0.4, delay: i * 0.08 }}
+                  >
+                    <div
+                      className={`group relative h-full overflow-hidden rounded-2xl border border-border/60 bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/10 ${p.hoverRing}`}
+                    >
+                      {/* Gradient tint overlay on hover */}
+                      <div
+                        aria-hidden="true"
+                        className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${p.gradient} opacity-0 transition-opacity duration-300 group-hover:opacity-[0.06]`}
+                      />
+                      {/* Top gradient accent line */}
+                      <div
+                        aria-hidden="true"
+                        className={`pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${p.gradient} opacity-70`}
+                      />
+
+                      <div className="relative">
+                        {/* Platform icon tile */}
+                        <div
+                          className={`mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${p.gradient} text-white shadow-lg transition-transform duration-300 group-hover:scale-110`}
+                          aria-hidden="true"
+                        >
+                          <Icon className="h-7 w-7" />
+                        </div>
+
+                        <h3 className="text-lg font-bold tracking-tight">
+                          {p.name}
+                        </h3>
+                        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                          {p.description}
+                        </p>
+
+                        {/* Content type pills */}
+                        <div className="mt-5 flex flex-wrap gap-2 border-t border-border/60 pt-4">
+                          {p.contentTypes.map((ct) => (
+                            <span
+                              key={ct}
+                              className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${p.pillClass}`}
+                            >
+                              {ct}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section className="border-y border-border bg-card/50">
+          <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                How it works
+              </h2>
+              <p className="mt-4 text-muted-foreground">
+                Three simple steps from raw social content to actionable
+                insight.
+              </p>
+            </div>
+            <div className="mt-12 grid gap-8 md:grid-cols-3">
+              {STEPS.map((step, i) => (
+                <div key={step.title} className="relative text-center">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-xl font-bold text-white shadow-lg shadow-emerald-500/20">
+                    {i + 1}
+                  </div>
+                  <h3 className="mb-2 font-semibold">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Technology Stack */}
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mx-auto max-w-2xl text-center"
+          >
+            <Badge className="mb-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Cpu className="h-3 w-3" aria-hidden="true" />
+              Tech Stack
+            </Badge>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Built with <span className="gradient-text">Modern Technology</span>
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              SentimentSense leverages cutting-edge tools for reliable, scalable sentiment analysis.
+            </p>
+          </motion.div>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {TECH_STACK.map((tech, i) => (
+              <motion.div
+                key={tech.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+              >
+                <Card className="group h-full border-border/60 bg-gradient-to-br from-card to-muted/20 transition-all duration-200 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5">
+                  <CardContent className="p-6">
+                    <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/15 to-teal-500/10 text-primary ring-1 ring-primary/10">
+                      <tech.icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="mb-2 font-semibold">{tech.name}</h3>
+                    <p className="text-sm text-muted-foreground">{tech.desc}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <TestimonialsSection />
+
+        {/* Pricing / Tiers */}
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Simple, transparent tiers
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Start free. Upgrade to premium for live stream analysis — approved
+              by our admin team.
+            </p>
+          </div>
+          <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2">
+            <Card className="relative border-border/60">
+              <CardContent className="p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Free</h3>
+                  <Badge variant="secondary">Default</Badge>
+                </div>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold">₹0</span>
+                  <span className="text-muted-foreground">/forever</span>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  {[
+                    "Analyze videos, posts, reels & discussions",
+                    "YouTube, Reddit, X, Instagram",
+                    "Sentiment + 8 emotion types",
+                    "Downloadable PDF reports",
+                    "Up to 40 items per analysis",
+                  ].map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="mt-6 w-full focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                  variant="outline"
+                  onClick={() => setView("register")}
+                >
+                  Get Started
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="relative border-primary/40 shadow-lg shadow-primary/10">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                  <Star className="h-3 w-3" aria-hidden="true" />
+                  PREMIUM
+                </Badge>
+              </div>
+              <CardContent className="p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Premium</h3>
+                  <Badge variant="secondary">Admin-approved</Badge>
+                </div>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold">Premium</span>
+                  <span className="text-muted-foreground">/access</span>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  {[
+                    "Everything in Free",
+                    "Live stream real-time analysis",
+                    "Segment-by-segment sentiment tracking",
+                    "Live emotion trend charts",
+                    "Priority processing",
+                    "Unlimited analysis history",
+                  ].map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="mt-6 w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                  onClick={() => setView("register")}
+                >
+                  Apply for Premium
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="relative border-y border-border bg-card/50">
+          {/* Subtle emerald glow */}
+          <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-emerald-500/8 blur-3xl" aria-hidden="true" />
+          <div className="mx-auto max-w-3xl px-4 py-24 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="mx-auto text-center"
+            >
+              <Badge className="mb-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <HelpCircle className="h-3 w-3" aria-hidden="true" />
+                FAQ
+              </Badge>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Frequently <span className="gradient-text">Asked Questions</span>
+              </h2>
+              <p className="mt-4 text-muted-foreground">
+                Everything you need to know about SentimentSense
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="mt-10"
+            >
+              <Accordion type="single" collapsible className="w-full">
+                {FAQ_ITEMS.map((faq, i) => (
+                  <AccordionItem
+                    key={i}
+                    value={`faq-${i}`}
+                    className="mb-3 rounded-xl border bg-card px-5 shadow-sm transition-colors last:border-b hover:border-emerald-500/30 data-[state=open]:border-primary/40"
+                  >
+                    <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline hover:bg-accent/50 transition-colors">
+                      {faq.q}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                      {faq.a}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Team / Group */}
+        <section className="border-t border-border bg-gradient-to-b from-card/50 to-background">
+          <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+            <div className="rounded-3xl border border-border bg-card p-8 text-center shadow-sm sm:p-12">
+              <Badge className="mb-4 gap-1.5 border-0 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+                <GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />
+                Final Year Project
+              </Badge>
+              <h2 className="text-3xl font-bold tracking-tight">
+                Developed by{" "}
+                <span className="gradient-text">Group No {GROUP_INFO.groupNumber}</span>
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+                A comprehensive sentiment and emotion analysis dashboard built
+                as a final year college project, combining full-stack web
+                development with machine learning.
+              </p>
+
+              {/* About the project — tech subtitle row */}
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                {["Next.js 16", "Prisma ORM", "Transformer NLP"].map((tech) => (
+                  <Badge
+                    key={tech}
+                    variant="outline"
+                    className="border-border/60 bg-background/50 text-xs font-medium text-muted-foreground"
+                  >
+                    {tech}
+                  </Badge>
+                ))}
+              </div>
+
+              <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                {GROUP_INFO.members.map((member) => {
+                  const initials = member
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2);
+                  return (
+                    <div
+                      key={member}
+                      className="group rounded-xl border border-border/60 bg-background/50 p-4 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:bg-card hover:shadow-lg hover:shadow-primary/10"
+                    >
+                      <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-lg font-bold text-white shadow-md shadow-emerald-500/20 transition-transform group-hover:scale-105" aria-label={`${member} avatar`}>
+                        <span className="sr-only">{member}</span>
+                        <span aria-hidden="true">{initials}</span>
+                      </div>
+                      <p className="text-base font-semibold">{member}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Final Year Student
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground/70">
+                        Computer Engineering
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700 p-12 text-center text-white shadow-2xl shadow-emerald-500/20 sm:p-16">
+            {/* Decorative floating shapes — circles & dots */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -left-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-2xl animate-float-slow"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-cyan-300/20 blur-3xl animate-float-reverse"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute right-10 top-10 h-3 w-3 rounded-full bg-white/40 animate-float"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute left-12 bottom-12 h-2 w-2 rounded-full bg-white/50 animate-float-slow"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute right-1/4 top-1/2 h-4 w-4 rounded-full border-2 border-white/30 animate-float-reverse"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute left-1/3 top-12 h-2 w-2 rounded-full bg-white/40 animate-float"
+            />
+            {/* Diagonal shimmer sweep across the CTA */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 overflow-hidden"
+            >
+              <div className="absolute inset-y-0 -left-1/3 w-1/4 animate-shimmer-sweep bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="relative"
+            >
+              <Badge className="mb-4 gap-1.5 border-white/30 bg-white/10 text-white backdrop-blur">
+                <Sparkles className="h-3 w-3" aria-hidden="true" />
+                Start in seconds
+              </Badge>
+              <h2
+                className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl"
+                style={{ textShadow: "0 2px 12px rgba(0,0,0,0.25)" }}
+              >
+                Ready to decode public sentiment?
+              </h2>
+              <p
+                className="mx-auto mt-4 max-w-xl text-emerald-50"
+                style={{ textShadow: "0 1px 6px rgba(0,0,0,0.2)" }}
+              >
+                Join SentimentSense and start analyzing social media content
+                with transformer-powered AI. Your first analysis is just a
+                click away.
+              </p>
+
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Button
+                  size="lg"
+                  className="w-full bg-white text-emerald-700 shadow-lg hover:bg-emerald-50 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-600 sm:w-auto"
+                  onClick={() => setView("register")}
+                >
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full border-white/70 bg-transparent text-white hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-600 sm:w-auto"
+                  onClick={() => setView("login")}
+                >
+                  View Demo
+                </Button>
+              </div>
+
+              <p className="mt-4 text-xs text-emerald-50/90">
+                No credit card required • Free tier includes all platforms
+              </p>
+            </motion.div>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
+
+const FEATURES = [
+  {
+    icon: Brain,
+    title: "Transformer-Powered NLP",
+    desc: "Fine-tuned transformer model classifies sentiment and 8 distinct emotions with high accuracy.",
+  },
+  {
+    icon: BarChart3,
+    title: "Rich Visualizations",
+    desc: "Interactive pie charts, emotion bars, sentiment gauges, and keyword clouds for instant insight.",
+  },
+  {
+    icon: Youtube,
+    title: "Multi-Platform Support",
+    desc: "Analyze YouTube videos & streams, Reddit discussions, X posts, and Instagram reels & posts.",
+  },
+  {
+    icon: Zap,
+    title: "Live Stream Analysis",
+    desc: "Premium feature tracks sentiment in real-time during live streams, segment by segment.",
+  },
+  {
+    icon: Download,
+    title: "PDF Reports",
+    desc: "Download detailed analysis reports with metrics, insights, keywords, and sample items.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Private & Secure",
+    desc: "Each user has a separate dashboard. Your analyses are visible only to you and admins.",
+  },
+];
+
+const TECH_STACK = [
+  {
+    icon: Globe,
+    name: "Next.js 16",
+    desc: "Server-side rendering & App Router for lightning-fast pages",
+  },
+  {
+    icon: Database,
+    name: "Prisma ORM",
+    desc: "Type-safe database access with SQLite storage",
+  },
+  {
+    icon: Brain,
+    name: "Transformer NLP",
+    desc: "Fine-tuned language model for accurate sentiment classification",
+  },
+  {
+    icon: BarChart3,
+    name: "Recharts",
+    desc: "Interactive data visualizations and chart components",
+  },
+  {
+    icon: ShieldCheck,
+    name: "NextAuth.js",
+    desc: "Secure authentication with JWT session management",
+  },
+  {
+    icon: Palette,
+    name: "Tailwind CSS",
+    desc: "Utility-first styling with custom design system",
+  },
+];
+
+const FAQ_ITEMS = [
+  {
+    q: "What platforms does SentimentSense support?",
+    a: "SentimentSense supports YouTube (videos & live streams), Reddit (discussions & threads), X/Twitter (posts & replies), and Instagram (reels & posts). We're constantly evaluating new platforms.",
+  },
+  {
+    q: "How accurate is the sentiment analysis?",
+    a: "Our fine-tuned transformer model classifies sentiment into positive, negative, neutral, and mixed categories, along with 8 distinct emotions. The model has been specifically trained on social media content for higher accuracy in informal language contexts.",
+  },
+  {
+    q: "What's included in the free tier?",
+    a: "The free tier includes full sentiment and emotion analysis across all four platforms, PDF report downloads, CSV exports, comparison tools, and up to 40 items per analysis. No credit card required.",
+  },
+  {
+    q: "How do I get premium access?",
+    a: "Submit a premium application from your dashboard. Our admin team reviews each request, typically within 24 hours. Premium unlocks live stream real-time analysis and advanced analytics features.",
+  },
+  {
+    q: "Is my data private?",
+    a: "Yes. Each user has a separate dashboard, and your analyses are visible only to you and administrators. We don't share your data with third parties.",
+  },
+];
+
+const STEPS = [
+  {
+    title: "Paste or Select Content",
+    desc: "Choose a platform, paste comments or pick from sample datasets — no API keys needed.",
+  },
+  {
+    title: "AI Analyzes Sentiment",
+    desc: "Our transformer model classifies each item's sentiment, emotion, and intensity score.",
+  },
+  {
+    title: "Visualize & Download",
+    desc: "Explore interactive charts, read insights, and export a polished PDF report.",
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    quote:
+      "We used SentimentSense to track real-time reactions across YouTube and X during a flagship product launch. It flagged a wave of negative comments about a missing feature within the first hour, so we caught and addressed the PR issue before it snowballed. Genuinely a game-changer for our brand monitoring workflow.",
+    name: "Priya Sharma",
+    role: "Digital Marketing Lead, TechVista Solutions",
+    gradient: "from-emerald-500 to-teal-600",
+    initials: "PS",
+  },
+  {
+    quote:
+      "The emotion breakdown completely changed how I plan content. I A/B test variations of our videos and posts, and SentimentSense makes it obvious — joy and surprise consistently drive the most engagement on ViralFeeds. I now write every script with those two emotions front of mind.",
+    name: "Rohan Mehta",
+    role: "Content Strategist, ViralFeeds",
+    gradient: "from-cyan-500 to-emerald-600",
+    initials: "RM",
+  },
+  {
+    quote:
+      "I'm using SentimentSense for my doctoral research on public sentiment during elections. The transformer-based classification is rigorous enough to cite, and the downloadable PDF reports make it easy to include in my methodology chapter. It saved me weeks of manual annotation work.",
+    name: "Dr. Anjali Kulkarni",
+    role: "Researcher, Symbiosis Institute",
+    gradient: "from-violet-500 to-rose-500",
+    initials: "AK",
+  },
+];
+
+function TestimonialsSection() {
+  return (
+    <section className="relative mx-auto max-w-7xl overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
+      {/* Soft emerald glow background */}
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-80 w-[42rem] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" aria-hidden="true" />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="relative mx-auto max-w-2xl text-center"
+      >
+        <Badge className="mb-4 gap-1.5 border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+          Loved by users
+        </Badge>
+        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          What our users are saying
+        </h2>
+        <p className="mt-4 text-muted-foreground">
+          Marketers, researchers, and content creators rely on SentimentSense
+          to decode public emotion across social media every day.
+        </p>
+      </motion.div>
+
+      <div className="relative mt-12 grid gap-6 md:grid-cols-3">
+        {TESTIMONIALS.map((t, i) => (
+          <motion.div
+            key={t.name}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: i * 0.08 }}
+          >
+            <Card className="relative h-full overflow-hidden border-border/60 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+              <CardContent className="p-6">
+                <Quote className="pointer-events-none absolute right-4 top-4 h-12 w-12 text-primary/10" aria-hidden="true" />
+                <div className="mb-3 flex gap-0.5">
+                  {Array.from({ length: 5 }).map((_, s) => (
+                    <Star
+                      key={s}
+                      className="h-4 w-4 fill-amber-500 text-amber-500"
+                      aria-hidden="true"
+                    />
+                  ))}
+                </div>
+                <p className="relative text-sm leading-relaxed text-foreground/90">
+                  “{t.quote}”
+                </p>
+                <div className="mt-6 flex items-center gap-3 border-t border-border/60 pt-4">
+                  <div
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${t.gradient} text-sm font-semibold text-white shadow-md`}
+                    aria-label={`${t.name} avatar`}
+                  >
+                    <span className="sr-only">{t.name}</span>
+                    <span aria-hidden="true">{t.initials}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DemoPreviewSection() {
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-b from-background to-muted/30 py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto max-w-2xl text-center"
+        >
+          <Badge className="mb-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <Sparkles className="h-3 w-3" aria-hidden="true" />
+            Live Preview
+          </Badge>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            See SentimentSense in action
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            A glimpse of what your analysis dashboard looks like — rich charts,
+            emotion breakdowns, and AI-generated insights.
+          </p>
+        </motion.div>
+
+        {/* Dashboard mockup */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="relative mx-auto mt-12 max-w-5xl"
+        >
+          {/* Glow effects */}
+          <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-emerald-500/30 via-teal-500/30 to-cyan-500/30 blur-3xl" aria-hidden="true" />
+          <div className="absolute -inset-2 -right-8 rounded-3xl bg-gradient-to-l from-cyan-500/20 via-emerald-500/10 to-transparent blur-2xl" aria-hidden="true" />
+
+          <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-2xl shadow-emerald-500/15">
+            {/* Browser chrome */}
+            <div className="flex items-center gap-2 border-b border-border bg-muted/50 px-4 py-3">
+              <div className="flex gap-1.5" aria-hidden="true">
+                <div className="h-3 w-3 rounded-full bg-red-400" />
+                <div className="h-3 w-3 rounded-full bg-amber-400" />
+                <div className="h-3 w-3 rounded-full bg-emerald-400" />
+              </div>
+              <div className="ml-3 flex-1 truncate rounded-md bg-background px-3 py-1 text-xs text-muted-foreground">
+                sentimentsense.app/dashboard
+              </div>
+            </div>
+
+            {/* Dashboard content */}
+            <div className="grid gap-4 p-5 sm:grid-cols-3 sm:p-6">
+              {/* Metric cards */}
+              <DemoMetric
+                label="Overall Sentiment"
+                value="Positive"
+                color="text-emerald-600 dark:text-emerald-400"
+                icon={<TrendingUp className="h-4 w-4" />}
+              />
+              <DemoMetric
+                label="Sentiment Score"
+                value="+0.42"
+                color="text-emerald-600 dark:text-emerald-400"
+                icon={<Activity className="h-4 w-4" />}
+              />
+              <DemoMetric
+                label="Dominant Emotion"
+                value="Joy"
+                color="text-emerald-600 dark:text-emerald-400"
+                icon={<Smile className="h-4 w-4" />}
+              />
+
+              {/* Sentiment distribution bar */}
+              <div className="sm:col-span-2">
+                <div className="rounded-xl border border-border bg-background/50 p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Sentiment Distribution
+                    </span>
+                    <Badge variant="outline" className="text-[10px]">
+                      240 items
+                    </Badge>
+                  </div>
+                  <div className="flex h-3 overflow-hidden rounded-full bg-muted">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: "58%" }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, delay: 0.3 }}
+                      className="bg-emerald-500"
+                    />
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: "27%" }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                      className="bg-red-500"
+                    />
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: "15%" }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, delay: 0.7 }}
+                      className="bg-amber-500"
+                    />
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-4 text-xs">
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      Positive 58%
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-red-500" />
+                      Negative 27%
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-amber-500" />
+                      Neutral 15%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mini gauge */}
+              <div className="rounded-xl border border-border bg-background/50 p-4">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Score
+                </span>
+                <div className="relative mt-2 flex h-20 items-end justify-center">
+                  <svg width="120" height="60" viewBox="0 0 120 60" role="img" aria-label="Sentiment score gauge showing +0.42">
+                    <path
+                      d="M 10 55 A 50 50 0 0 1 110 55"
+                      fill="none"
+                      stroke="var(--muted)"
+                      strokeWidth="10"
+                      strokeLinecap="round"
+                    />
+                    <motion.path
+                      d="M 10 55 A 50 50 0 0 1 110 55"
+                      fill="none"
+                      stroke="#10b981"
+                      strokeWidth="10"
+                      strokeLinecap="round"
+                      initial={{ pathLength: 0 }}
+                      whileInView={{ pathLength: 0.71 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.2, delay: 0.4 }}
+                    />
+                  </svg>
+                  <div className="absolute bottom-0 text-center">
+                    <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                      +0.42
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Emotion bars */}
+              <div className="sm:col-span-3">
+                <div className="rounded-xl border border-border bg-background/50 p-4">
+                  <span className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Emotion Breakdown
+                  </span>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {[
+                      { label: "Joy", pct: 70, color: "bg-emerald-500", emoji: "😄" },
+                      { label: "Surprise", pct: 45, color: "bg-violet-500", emoji: "😲" },
+                      { label: "Anger", pct: 27, color: "bg-red-500", emoji: "😠" },
+                      { label: "Anticipation", pct: 38, color: "bg-amber-500", emoji: "🤩" },
+                    ].map((e, i) => (
+                      <div key={e.label}>
+                        <div className="mb-1 flex items-center justify-between text-xs">
+                          <span className="flex items-center gap-1">
+                            <span>{e.emoji}</span>
+                            <span className="font-medium">{e.label}</span>
+                          </span>
+                          <span className="text-muted-foreground">{e.pct}%</span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-muted">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: `${e.pct}%` }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
+                            className={e.color}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* AI insight */}
+              <div className="sm:col-span-3">
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+                      <Brain className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                      AI Insight
+                    </span>
+                  </div>
+                  <p className="text-sm text-foreground/90">
+                    Public reaction is predominantly positive, with users praising
+                    camera quality and performance. However, concerns about price
+                    and battery life suggest opportunities for improvement in
+                    messaging.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function DemoMetric({
+  label,
+  value,
+  color,
+  icon,
+}: {
+  label: string;
+  value: string;
+  color: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-background/50 p-4">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
+        <span className={color}>{icon}</span>
+      </div>
+      <p className={`mt-2 text-xl font-bold ${color}`}>{value}</p>
+    </div>
+  );
+}
+
+/**
+ * Animated count-up number — starts at 0 and animates to `to`
+ * when scrolled into view. Uses Framer Motion's useMotionValue + animate.
+ */
+function CountUp({ to, duration = 1.4 }: { to: number; duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-50px" });
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (v) => Math.round(v).toString());
+
+  useEffect(() => {
+    if (inView) {
+      const controls = animate(count, to, { duration, ease: "easeOut" });
+      return () => controls.stop();
+    }
+  }, [inView, to, duration, count]);
+
+  return <motion.span ref={ref}>{rounded}</motion.span>;
+}
+
+/**
+ * Renders a stat value — either an animated count-up (for numbers)
+ * or the literal "∞" symbol for the infinity stat.
+ */
+function StatValue({ value }: { value: number | "∞" }) {
+  if (value === "∞") return <>∞</>;
+  return <CountUp to={value} />;
+}
+
+const ANIMATED_STATS: { value: number | "∞"; caption: string }[] = [
+  { value: 4, caption: "Platforms Supported" },
+  { value: 8, caption: "Emotion Types Detected" },
+  { value: 3, caption: "Sentiment Categories" },
+  { value: "∞", caption: "Analyses Possible" },
+];
+
+const PLATFORM_SHOWCASE: {
+  name: string;
+  description: string;
+  contentTypes: string[];
+  icon: typeof Youtube;
+  /** Brand-colored gradient for the icon tile and hover border */
+  gradient: string;
+  /** Soft tinted background ring on hover */
+  hoverRing: string;
+  /** Small pill accent color for content type badges */
+  pillClass: string;
+}[] = [
+  {
+    name: "YouTube",
+    description: "Analyze video comments and live stream chats in real-time.",
+    contentTypes: ["Video", "Livestream"],
+    icon: Youtube,
+    gradient: "from-red-500 to-rose-600",
+    hoverRing: "group-hover:border-red-500/40",
+    pillClass: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+  },
+  {
+    name: "Reddit",
+    description: "Deep-dive into discussion threads and community sentiment.",
+    contentTypes: ["Discussion"],
+    icon: MessageCircle,
+    gradient: "from-orange-500 to-amber-600",
+    hoverRing: "group-hover:border-orange-500/40",
+    pillClass:
+      "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
+  },
+  {
+    name: "X (Twitter)",
+    description: "Track tweet sentiment and reply threads across the network.",
+    contentTypes: ["Post"],
+    icon: Twitter,
+    gradient: "from-foreground to-muted-foreground",
+    hoverRing: "group-hover:border-foreground/40",
+    pillClass: "bg-foreground/10 text-foreground border-foreground/20",
+  },
+  {
+    name: "Instagram",
+    description: "Analyze reel comments and post engagement from your audience.",
+    contentTypes: ["Reel", "Post"],
+    icon: Instagram,
+    gradient: "from-pink-500 to-fuchsia-600",
+    hoverRing: "group-hover:border-pink-500/40",
+    pillClass:
+      "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20",
+  },
+];

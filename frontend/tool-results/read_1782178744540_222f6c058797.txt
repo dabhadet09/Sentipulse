@@ -1,0 +1,701 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useState, useCallback } from "react";
+     4→import { motion } from "framer-motion";
+     5→import { formatDistanceToNow } from "date-fns";
+     6→import {
+     7→  Users,
+     8→  Crown,
+     9→  ShieldCheck,
+    10→  BarChart3,
+    11→  Sparkles,
+    12→  Clock,
+    13→  CheckCircle2,
+    14→  XCircle,
+    15→  ArrowRight,
+    16→  Activity as ActivityIcon,
+    17→  AlertCircle,
+    18→  Loader2,
+    19→  TrendingUp,
+    20→  PieChart as PieIcon,
+    21→  Layers,
+    22→  LineChart as LineIcon,
+    23→} from "lucide-react";
+    24→
+    25→import { useAppStore } from "@/store/app-store";
+    26→import {
+    27→  Card,
+    28→  CardContent,
+    29→  CardDescription,
+    30→  CardHeader,
+    31→  CardTitle,
+    32→} from "@/components/ui/card";
+    33→import { Button } from "@/components/ui/button";
+    34→import { Badge } from "@/components/ui/badge";
+    35→import { Skeleton } from "@/components/ui/skeleton";
+    36→import { ScrollArea } from "@/components/ui/scroll-area";
+    37→import { cn } from "@/lib/utils";
+    38→import {
+    39→  ComposedChart,
+    40→  Bar,
+    41→  Line,
+    42→  XAxis,
+    43→  YAxis,
+    44→  CartesianGrid,
+    45→  Tooltip,
+    46→  ResponsiveContainer,
+    47→  Legend,
+    48→} from "recharts";
+    49→
+    50→import {
+    51→  TrendAreaChart,
+    52→  PlatformBarChart,
+    53→  SentimentPieChart,
+    54→} from "@/components/shared/charts";
+    55→import { PlatformBadge } from "@/components/shared/badges";
+    56→
+    57→interface StatsResponse {
+    58→  totals: {
+    59→    users: number;
+    60→    premiumUsers: number;
+    61→    adminUsers: number;
+    62→    analyses: number;
+    63→    premiumAnalyses: number;
+    64→    pendingApplications: number;
+    65→    approvedApplications: number;
+    66→    rejectedApplications: number;
+    67→  };
+    68→  platformBreakdown: { platform: string; count: number }[];
+    69→  sentimentBreakdown: { sentiment: string; count: number }[];
+    70→  dailyNewUsers: { date: string; count: number }[];
+    71→  dailyAnalyses: {
+    72→    date: string;
+    73→    total: number;
+    74→    premium: number;
+    75→    byPlatform: Record<string, number>;
+    76→  }[];
+    77→  recentActivity: {
+    78→    id: string;
+    79→    action: string;
+    80→    detail: string | null;
+    81→    createdAt: string;
+    82→    user: { name: string; email: string };
+    83→  }[];
+    84→}
+    85→
+    86→const ACTION_META: Record<
+    87→  string,
+    88→  { label: string; color: string; bg: string }
+    89→> = {
+    90→  login: {
+    91→    label: "Login",
+    92→    color: "text-emerald-600 dark:text-emerald-400",
+    93→    bg: "bg-emerald-500/10",
+    94→  },
+    95→  register: {
+    96→    label: "Register",
+    97→    color: "text-emerald-600 dark:text-emerald-400",
+    98→    bg: "bg-emerald-500/10",
+    99→  },
+   100→  analysis: {
+   101→    label: "Analysis",
+   102→    color: "text-violet-600 dark:text-violet-400",
+   103→    bg: "bg-violet-500/10",
+   104→  },
+   105→  apply_premium: {
+   106→    label: "Premium App",
+   107→    color: "text-amber-600 dark:text-amber-400",
+   108→    bg: "bg-amber-500/10",
+   109→  },
+   110→  download_report: {
+   111→    label: "Report",
+   112→    color: "text-cyan-600 dark:text-cyan-400",
+   113→    bg: "bg-cyan-500/10",
+   114→  },
+   115→  logout: {
+   116→    label: "Logout",
+   117→    color: "text-muted-foreground",
+   118→    bg: "bg-muted",
+   119→  },
+   120→};
+   121→
+   122→function actionMeta(action: string) {
+   123→  return (
+   124→    ACTION_META[action] || {
+   125→      label: action.replace(/_/g, " "),
+   126→      color: "text-muted-foreground",
+   127→      bg: "bg-muted",
+   128→    }
+   129→  );
+   130→}
+   131→
+   132→function StatCard({
+   133→  icon: Icon,
+   134→  label,
+   135→  value,
+   136→  tone,
+   137→  delay = 0,
+   138→}: {
+   139→  icon: typeof Users;
+   140→  label: string;
+   141→  value: number;
+   142→  tone: "emerald" | "amber" | "violet" | "rose" | "teal" | "cyan" | "slate" | "orange";
+   143→  delay?: number;
+   144→}) {
+   145→  const tones: Record<string, string> = {
+   146→    emerald:
+   147→      "from-emerald-500/15 to-emerald-500/5 text-emerald-600 dark:text-emerald-400 ring-emerald-500/20",
+   148→    amber:
+   149→      "from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400 ring-amber-500/20",
+   150→    violet:
+   151→      "from-violet-500/15 to-violet-500/5 text-violet-600 dark:text-violet-400 ring-violet-500/20",
+   152→    rose: "from-rose-500/15 to-rose-500/5 text-rose-600 dark:text-rose-400 ring-rose-500/20",
+   153→    teal: "from-teal-500/15 to-teal-500/5 text-teal-600 dark:text-teal-400 ring-teal-500/20",
+   154→    cyan: "from-cyan-500/15 to-cyan-500/5 text-cyan-600 dark:text-cyan-400 ring-cyan-500/20",
+   155→    slate:
+   156→      "from-slate-500/15 to-slate-500/5 text-slate-600 dark:text-slate-300 ring-slate-500/20",
+   157→    orange:
+   158→      "from-orange-500/15 to-orange-500/5 text-orange-600 dark:text-orange-400 ring-orange-500/20",
+   159→  };
+   160→
+   161→  return (
+   162→    <motion.div
+   163→      initial={{ opacity: 0, y: 10 }}
+   164→      animate={{ opacity: 1, y: 0 }}
+   165→      transition={{ duration: 0.3, delay }}
+   166→    >
+   167→      <Card
+   168→        className={cn(
+   169→          "relative overflow-hidden bg-gradient-to-br ring-1 transition-shadow hover:shadow-md",
+   170→          tones[tone]
+   171→        )}
+   172→      >
+   173→        <CardContent className="flex items-center gap-3 p-4">
+   174→          <div
+   175→            className={cn(
+   176→              "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background/60 ring-1 ring-inset ring-border/50",
+   177→              tones[tone].split(" ").filter((c) => c.startsWith("text-")).join(" ")
+   178→            )}
+   179→          >
+   180→            <Icon className="h-5 w-5" />
+   181→          </div>
+   182→          <div className="min-w-0 flex-1">
+   183→            <p className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+   184→              {label}
+   185→            </p>
+   186→            <p className="text-2xl font-bold tabular-nums leading-tight text-foreground">
+   187→              {value.toLocaleString()}
+   188→            </p>
+   189→          </div>
+   190→        </CardContent>
+   191→      </Card>
+   192→    </motion.div>
+   193→  );
+   194→}
+   195→
+   196→export function OverviewTab() {
+   197→  const setAdminTab = useAppStore((s) => s.setAdminTab);
+   198→  const [stats, setStats] = useState<StatsResponse | null>(null);
+   199→  const [loading, setLoading] = useState(true);
+   200→  const [error, setError] = useState<string | null>(null);
+   201→
+   202→  const fetchStats = useCallback(async () => {
+   203→    try {
+   204→      setLoading(true);
+   205→      setError(null);
+   206→      const res = await fetch("/api/admin/stats");
+   207→      if (!res.ok) throw new Error("Failed to fetch stats");
+   208→      const data = (await res.json()) as StatsResponse;
+   209→      setStats(data);
+   210→    } catch (e) {
+   211→      setError(e instanceof Error ? e.message : "Unknown error");
+   212→    } finally {
+   213→      setLoading(false);
+   214→    }
+   215→  }, []);
+   216→
+   217→  useEffect(() => {
+   218→    fetchStats();
+   219→  }, [fetchStats]);
+   220→
+   221→  if (loading) {
+   222→    return (
+   223→      <div className="space-y-6">
+   224→        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+   225→          {Array.from({ length: 8 }).map((_, i) => (
+   226→            <Skeleton key={i} className="h-[88px] w-full" />
+   227→          ))}
+   228→        </div>
+   229→        <div className="grid gap-4 lg:grid-cols-2">
+   230→          <Skeleton className="h-[300px] w-full" />
+   231→          <Skeleton className="h-[300px] w-full" />
+   232→        </div>
+   233→      </div>
+   234→    );
+   235→  }
+   236→
+   237→  if (error || !stats) {
+   238→    return (
+   239→      <Card className="border-rose-500/30 bg-rose-500/5">
+   240→        <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
+   241→          <AlertCircle className="h-8 w-8 text-rose-500" />
+   242→          <p className="text-sm font-medium">Failed to load admin stats</p>
+   243→          <p className="text-xs text-muted-foreground">{error}</p>
+   244→          <Button size="sm" onClick={fetchStats} variant="outline">
+   245→            Try again
+   246→          </Button>
+   247→        </CardContent>
+   248→      </Card>
+   249→    );
+   250→  }
+   251→
+   252→  const t = stats.totals;
+   253→
+   254→  // Convert sentimentBreakdown [{sentiment, count}] -> {positive, negative, neutral} percentages
+   255→  const sentimentCounts: Record<string, number> = {
+   256→    positive: 0,
+   257→    negative: 0,
+   258→    neutral: 0,
+   259→    mixed: 0,
+   260→  };
+   261→  for (const s of stats.sentimentBreakdown) {
+   262→    const key = (s.sentiment || "neutral").toLowerCase();
+   263→    sentimentCounts[key] = (sentimentCounts[key] || 0) + s.count;
+   264→  }
+   265→  const totalSentiment =
+   266→    sentimentCounts.positive +
+   267→    sentimentCounts.negative +
+   268→    sentimentCounts.neutral +
+   269→    sentimentCounts.mixed;
+   270→  const pct = (n: number) =>
+   271→    totalSentiment > 0 ? Math.round((n / totalSentiment) * 100) : 0;
+   272→
+   273→  const sentimentDist = {
+   274→    positive: pct(sentimentCounts.positive),
+   275→    negative: pct(sentimentCounts.negative),
+   276→    neutral: pct(sentimentCounts.neutral),
+   277→  };
+   278→
+   279→  // Daily new users [{date, count}] -> [{name, value}]
+   280→  const dailyData = stats.dailyNewUsers.map((d) => {
+   281→    const dateObj = new Date(d.date);
+   282→    return {
+   283→      name: dateObj.toLocaleDateString("en-US", {
+   284→        month: "short",
+   285→        day: "numeric",
+   286→      }),
+   287→      value: d.count,
+   288→    };
+   289→  });
+   290→
+   291→  // Daily analyses: total + premium + per-platform breakdown
+   292→  const analysesTimeData = (stats.dailyAnalyses || []).map((d) => {
+   293→    const dateObj = new Date(d.date);
+   294→    return {
+   295→      name: dateObj.toLocaleDateString("en-US", {
+   296→        month: "short",
+   297→        day: "numeric",
+   298→      }),
+   299→      total: d.total,
+   300→      premium: d.premium,
+   301→      standard: d.total - d.premium,
+   302→      youtube: d.byPlatform.youtube || 0,
+   303→      reddit: d.byPlatform.reddit || 0,
+   304→      x: d.byPlatform.x || 0,
+   305→      instagram: d.byPlatform.instagram || 0,
+   306→    };
+   307→  });
+   308→  const totalAnalyses7d = analysesTimeData.reduce((a, b) => a + b.total, 0);
+   309→  const totalPremium7d = analysesTimeData.reduce((a, b) => a + b.premium, 0);
+   310→  const peakDay = analysesTimeData.reduce(
+   311→    (max, d) => (d.total > max.total ? d : max),
+   312→    { name: "—", total: 0, premium: 0, standard: 0, youtube: 0, reddit: 0, x: 0, instagram: 0 }
+   313→  );
+   314→
+   315→  return (
+   316→    <div className="space-y-6">
+   317→      {/* Pending applications alert */}
+   318→      {t.pendingApplications > 0 && (
+   319→        <motion.div
+   320→          initial={{ opacity: 0, scale: 0.98 }}
+   321→          animate={{ opacity: 1, scale: 1 }}
+   322→        >
+   323→          <Card className="border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent">
+   324→            <CardContent className="flex flex-col items-start gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+   325→              <div className="flex items-start gap-3">
+   326→                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
+   327→                  <Clock className="h-5 w-5" />
+   328→                </div>
+   329→                <div>
+   330→                  <p className="text-sm font-semibold text-foreground">
+   331→                    {t.pendingApplications} pending premium application
+   332→                    {t.pendingApplications === 1 ? "" : "s"} awaiting review
+   333→                  </p>
+   334→                  <p className="text-xs text-muted-foreground">
+   335→                    Review applicant reasons, use cases, and account history
+   336→                    before granting PREMIUM access.
+   337→                  </p>
+   338→                </div>
+   339→              </div>
+   340→              <Button
+   341→                size="sm"
+   342→                className="gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90"
+   343→                onClick={() => setAdminTab("applications")}
+   344→              >
+   345→                Review now
+   346→                <ArrowRight className="h-4 w-4" />
+   347→              </Button>
+   348→            </CardContent>
+   349→          </Card>
+   350→        </motion.div>
+   351→      )}
+   352→
+   353→      {/* Stat cards (8) */}
+   354→      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+   355→        <StatCard icon={Users} label="Total Users" value={t.users} tone="emerald" delay={0} />
+   356→        <StatCard icon={Crown} label="Premium Users" value={t.premiumUsers} tone="amber" delay={0.04} />
+   357→        <StatCard icon={ShieldCheck} label="Admin Users" value={t.adminUsers} tone="teal" delay={0.08} />
+   358→        <StatCard icon={BarChart3} label="Total Analyses" value={t.analyses} tone="violet" delay={0.12} />
+   359→        <StatCard icon={Sparkles} label="Premium Analyses" value={t.premiumAnalyses} tone="cyan" delay={0.16} />
+   360→        <StatCard icon={Clock} label="Pending Apps" value={t.pendingApplications} tone="orange" delay={0.2} />
+   361→        <StatCard icon={CheckCircle2} label="Approved Apps" value={t.approvedApplications} tone="emerald" delay={0.24} />
+   362→        <StatCard icon={XCircle} label="Rejected Apps" value={t.rejectedApplications} tone="rose" delay={0.28} />
+   363→      </div>
+   364→
+   365→      {/* Charts row */}
+   366→      <div className="grid gap-4 lg:grid-cols-2">
+   367→        <Card>
+   368→          <CardHeader className="pb-2">
+   369→            <div className="flex items-center justify-between">
+   370→              <div className="flex items-center gap-2">
+   371→                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+   372→                  <TrendingUp className="h-4 w-4" />
+   373→                </div>
+   374→                <div>
+   375→                  <CardTitle className="text-base">Daily New Users</CardTitle>
+   376→                  <CardDescription className="text-xs">
+   377→                    Last 7 days signups
+   378→                  </CardDescription>
+   379→                </div>
+   380→              </div>
+   381→              <Badge variant="outline" className="text-[10px]">
+   382→                {dailyData.reduce((a, b) => a + b.value, 0)} new
+   383→              </Badge>
+   384→            </div>
+   385→          </CardHeader>
+   386→          <CardContent>
+   387→            {dailyData.some((d) => d.value > 0) ? (
+   388→              <TrendAreaChart data={dailyData} height={240} />
+   389→            ) : (
+   390→              <div className="flex h-[240px] flex-col items-center justify-center text-center text-sm text-muted-foreground">
+   391→                <TrendingUp className="mb-2 h-8 w-8 opacity-30" />
+   392→                No new users in the past 7 days.
+   393→              </div>
+   394→            )}
+   395→          </CardContent>
+   396→        </Card>
+   397→
+   398→        <Card>
+   399→          <CardHeader className="pb-2">
+   400→            <div className="flex items-center justify-between">
+   401→              <div className="flex items-center gap-2">
+   402→                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
+   403→                  <Layers className="h-4 w-4" />
+   404→                </div>
+   405→                <div>
+   406→                  <CardTitle className="text-base">Analyses by Platform</CardTitle>
+   407→                  <CardDescription className="text-xs">
+   408→                    Distribution across social platforms
+   409→                  </CardDescription>
+   410→                </div>
+   411→              </div>
+   412→              <Badge variant="outline" className="text-[10px]">
+   413→                {stats.platformBreakdown.reduce((a, b) => a + b.count, 0)} total
+   414→              </Badge>
+   415→            </div>
+   416→          </CardHeader>
+   417→          <CardContent>
+   418→            {stats.platformBreakdown.length > 0 ? (
+   419→              <PlatformBarChart
+   420→                data={stats.platformBreakdown}
+   421→                height={240}
+   422→              />
+   423→            ) : (
+   424→              <div className="flex h-[240px] flex-col items-center justify-center text-center text-sm text-muted-foreground">
+   425→                <Layers className="mb-2 h-8 w-8 opacity-30" />
+   426→                No analyses recorded yet.
+   427→              </div>
+   428→            )}
+   429→          </CardContent>
+   430→        </Card>
+   431→      </div>
+   432→
+   433→      {/* Analyses Over Time — full-width composed chart */}
+   434→      <Card>
+   435→        <CardHeader className="pb-2">
+   436→          <div className="flex flex-wrap items-center justify-between gap-3">
+   437→            <div className="flex items-center gap-2">
+   438→              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
+   439→                <LineIcon className="h-4 w-4" />
+   440→              </div>
+   441→              <div>
+   442→                <CardTitle className="text-base">Analyses Over Time</CardTitle>
+   443→                <CardDescription className="text-xs">
+   444→                  Daily analysis volume — last 7 days (stacked by tier, total
+   445→                  overlay)
+   446→                </CardDescription>
+   447→              </div>
+   448→            </div>
+   449→            <div className="flex flex-wrap items-center gap-2">
+   450→              <Badge
+   451→                variant="outline"
+   452→                className="gap-1 text-[10px] text-emerald-600 dark:text-emerald-400"
+   453→              >
+   454→                <BarChart3 className="h-3 w-3" />
+   455→                {totalAnalyses7d} in 7d
+   456→              </Badge>
+   457→              <Badge
+   458→                variant="outline"
+   459→                className="gap-1 text-[10px] text-amber-600 dark:text-amber-400"
+   460→              >
+   461→                <Crown className="h-3 w-3" />
+   462→                {totalPremium7d} premium
+   463→              </Badge>
+   464→              {peakDay.total > 0 && (
+   465→                <Badge
+   466→                  variant="outline"
+   467→                  className="gap-1 text-[10px] text-violet-600 dark:text-violet-400"
+   468→                >
+   469→                  <TrendingUp className="h-3 w-3" />
+   470→                  Peak: {peakDay.total} on {peakDay.name}
+   471→                </Badge>
+   472→              )}
+   473→            </div>
+   474→          </div>
+   475→        </CardHeader>
+   476→        <CardContent>
+   477→          {analysesTimeData.some((d) => d.total > 0) ? (
+   478→            <ResponsiveContainer width="100%" height={280}>
+   479→              <ComposedChart
+   480→                data={analysesTimeData}
+   481→                margin={{ left: -16, right: 8, top: 10, bottom: 0 }}
+   482→              >
+   483→                <defs>
+   484→                  <linearGradient id="stdBarGrad" x1="0" y1="0" x2="0" y2="1">
+   485→                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+   486→                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
+   487→                  </linearGradient>
+   488→                  <linearGradient id="premBarGrad" x1="0" y1="0" x2="0" y2="1">
+   489→                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
+   490→                    <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.65} />
+   491→                  </linearGradient>
+   492→                </defs>
+   493→                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+   494→                <XAxis
+   495→                  dataKey="name"
+   496→                  stroke="var(--muted-foreground)"
+   497→                  fontSize={12}
+   498→                />
+   499→                <YAxis
+   500→                  stroke="var(--muted-foreground)"
+   501→                  fontSize={12}
+   502→                  allowDecimals={false}
+   503→                />
+   504→                <Tooltip
+   505→                  contentStyle={{
+   506→                    background: "var(--popover)",
+   507→                    border: "1px solid var(--border)",
+   508→                    borderRadius: "0.5rem",
+   509→                    color: "var(--popover-foreground)",
+   510→                    fontSize: "12px",
+   511→                  }}
+   512→                  cursor={{ fill: "var(--muted)", opacity: 0.3 }}
+   513→                />
+   514→                <Legend
+   515→                  wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
+   516→                  iconType="circle"
+   517→                />
+   518→                <Bar
+   519→                  dataKey="standard"
+   520→                  name="Standard"
+   521→                  stackId="a"
+   522→                  fill="url(#stdBarGrad)"
+   523→                  radius={[0, 0, 0, 0]}
+   524→                  maxBarSize={48}
+   525→                />
+   526→                <Bar
+   527→                  dataKey="premium"
+   528→                  name="Premium"
+   529→                  stackId="a"
+   530→                  fill="url(#premBarGrad)"
+   531→                  radius={[4, 4, 0, 0]}
+   532→                  maxBarSize={48}
+   533→                />
+   534→                <Line
+   535→                  type="monotone"
+   536→                  dataKey="total"
+   537→                  name="Total"
+   538→                  stroke="#8b5cf6"
+   539→                  strokeWidth={2.5}
+   540→                  dot={{ r: 4, fill: "#8b5cf6", strokeWidth: 0 }}
+   541→                  activeDot={{ r: 6 }}
+   542→                />
+   543→              </ComposedChart>
+   544→            </ResponsiveContainer>
+   545→          ) : (
+   546→            <div className="flex h-[280px] flex-col items-center justify-center text-center text-sm text-muted-foreground">
+   547→              <LineIcon className="mb-2 h-8 w-8 opacity-30" />
+   548→              No analyses run in the past 7 days.
+   549→            </div>
+   550→          )}
+   551→        </CardContent>
+   552→      </Card>
+   553→
+   554→      {/* Sentiment distribution + recent activity */}
+   555→      <div className="grid gap-4 lg:grid-cols-5">
+   556→        <Card className="lg:col-span-2">
+   557→          <CardHeader className="pb-2">
+   558→            <div className="flex items-center gap-2">
+   559→              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+   560→                <PieIcon className="h-4 w-4" />
+   561→              </div>
+   562→              <div>
+   563→                <CardTitle className="text-base">Sentiment Distribution</CardTitle>
+   564→                <CardDescription className="text-xs">
+   565→                  Across all platform analyses
+   566→                </CardDescription>
+   567→              </div>
+   568→            </div>
+   569→          </CardHeader>
+   570→          <CardContent>
+   571→            {totalSentiment > 0 ? (
+   572→              <>
+   573→                <SentimentPieChart distribution={sentimentDist} height={220} />
+   574→                {sentimentCounts.mixed > 0 && (
+   575→                  <p className="mt-2 text-center text-[11px] text-muted-foreground">
+   576→                    <span className="font-medium text-violet-600 dark:text-violet-400">
+   577→                      Mixed: {pct(sentimentCounts.mixed)}%
+   578→                    </span>{" "}
+   579→                    ·{" "}
+   580→                    {sentimentCounts.mixed} of {totalSentiment} analyses
+   581→                  </p>
+   582→                )}
+   583→              </>
+   584→            ) : (
+   585→              <div className="flex h-[220px] flex-col items-center justify-center text-center text-sm text-muted-foreground">
+   586→                <PieIcon className="mb-2 h-8 w-8 opacity-30" />
+   587→                No sentiment data yet.
+   588→              </div>
+   589→            )}
+   590→          </CardContent>
+   591→        </Card>
+   592→
+   593→        <Card className="lg:col-span-3">
+   594→          <CardHeader className="pb-2">
+   595→            <div className="flex items-center justify-between">
+   596→              <div className="flex items-center gap-2">
+   597→                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+   598→                  <ActivityIcon className="h-4 w-4" />
+   599→                </div>
+   600→                <div>
+   601→                  <CardTitle className="text-base">Recent Activity</CardTitle>
+   602→                  <CardDescription className="text-xs">
+   603→                    Latest {stats.recentActivity.length} platform events
+   604→                  </CardDescription>
+   605→                </div>
+   606→              </div>
+   607→              <Button
+   608→                variant="ghost"
+   609→                size="sm"
+   610→                className="gap-1 text-xs"
+   611→                onClick={() => setAdminTab("activity")}
+   612→              >
+   613→                View all
+   614→                <ArrowRight className="h-3 w-3" />
+   615→              </Button>
+   616→            </div>
+   617→          </CardHeader>
+   618→          <CardContent className="p-0">
+   619→            <ScrollArea className="h-[340px]">
+   620→              {stats.recentActivity.length === 0 ? (
+   621→                <div className="flex h-[340px] flex-col items-center justify-center text-center text-sm text-muted-foreground">
+   622→                  <ActivityIcon className="mb-2 h-8 w-8 opacity-30" />
+   623→                  No activity recorded yet.
+   624→                </div>
+   625→              ) : (
+   626→                <ul className="divide-y divide-border">
+   627→                  {stats.recentActivity.map((a) => {
+   628→                    const meta = actionMeta(a.action);
+   629→                    return (
+   630→                      <li
+   631→                        key={a.id}
+   632→                        className="flex items-start gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40"
+   633→                      >
+   634→                        <div
+   635→                          className={cn(
+   636→                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold uppercase ring-1 ring-inset ring-border",
+   637→                            meta.bg,
+   638→                            meta.color
+   639→                          )}
+   640→                        >
+   641→                          {(a.user.name || a.user.email || "?")
+   642→                            .charAt(0)
+   643→                            .toUpperCase()}
+   644→                        </div>
+   645→                        <div className="min-w-0 flex-1">
+   646→                          <div className="flex items-center gap-2">
+   647→                            <p className="truncate text-sm font-medium text-foreground">
+   648→                              {a.user.name}
+   649→                            </p>
+   650→                            <Badge
+   651→                              variant="outline"
+   652→                              className={cn(
+   653→                                "shrink-0 px-1.5 py-0 text-[10px] font-medium capitalize",
+   654→                                meta.bg,
+   655→                                meta.color
+   656→                              )}
+   657→                            >
+   658→                              {meta.label}
+   659→                            </Badge>
+   660→                          </div>
+   661→                          <p className="truncate text-xs text-muted-foreground">
+   662→                            {a.detail || a.user.email}
+   663→                          </p>
+   664→                          <p className="mt-0.5 text-[10px] text-muted-foreground/70">
+   665→                            {formatDistanceToNow(new Date(a.createdAt), {
+   666→                              addSuffix: true,
+   667→                            })}
+   668→                          </p>
+   669→                        </div>
+   670→                      </li>
+   671→                    );
+   672→                  })}
+   673→                </ul>
+   674→              )}
+   675→            </ScrollArea>
+   676→          </CardContent>
+   677→        </Card>
+   678→      </div>
+   679→
+   680→      {/* Platform breakdown detail strip */}
+   681→      {stats.platformBreakdown.length > 0 && (
+   682→        <Card>
+   683→          <CardHeader className="pb-2">
+   684→            <CardTitle className="text-base">Platform Coverage</CardTitle>
+   685→            <CardDescription className="text-xs">
+   686→              Where users are running sentiment analyses
+   687→            </CardDescription>
+   688→          </CardHeader>
+   689→          <CardContent>
+   690→            <div className="flex flex-wrap gap-2">
+   691→              {stats.platformBreakdown.map((p) => (
+   692→                <PlatformBadge key={p.platform} platform={p.platform} />
+   693→              ))}
+   694→            </div>
+   695→          </CardContent>
+   696→        </Card>
+   697→      )}
+   698→    </div>
+   699→  );
+   700→}
+   701→

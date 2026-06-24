@@ -1,0 +1,806 @@
+     1→     1→"use client";
+     2→     2→
+     3→     3→import { useEffect, useState } from "react";
+     4→     4→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+     5→     5→import { Button } from "@/components/ui/button";
+     6→     6→import { Skeleton } from "@/components/ui/skeleton";
+     7→     7→import { Badge } from "@/components/ui/badge";
+     8→     8→import {
+     9→     9→  Select,
+    10→    10→  SelectContent,
+    11→    11→  SelectItem,
+    12→    12→  SelectTrigger,
+    13→    13→  SelectValue,
+    14→    14→} from "@/components/ui/select";
+    15→    15→import {
+    16→    16→  SentimentBadge,
+    17→    17→  PlatformBadge,
+    18→    18→  EmotionBadge,
+    19→    19→} from "@/components/shared/badges";
+    20→    20→import { SentimentGauge, SentimentPieChart, EmotionBarChart } from "@/components/shared/charts";
+    21→    21→import { getPlatform, getSentiment, EMOTIONS } from "@/lib/constants";
+    22→    22→import type { AnalysisResult } from "@/lib/analysis";
+    23→    23→import { motion } from "framer-motion";
+    24→    24→import {
+    25→    25→  RadarChart,
+    26→    26→  PolarGrid,
+    27→    27→  PolarAngleAxis,
+    28→    28→  PolarRadiusAxis,
+    29→    29→  Radar,
+    30→    30→  Legend,
+    31→    31→  ResponsiveContainer,
+    32→    32→  Tooltip,
+    33→    33→} from "recharts";
+    34→    34→import {
+    35→    35→  GitCompare,
+    36→    36→  TrendingUp,
+    37→    37→  TrendingDown,
+    38→    38→  Minus,
+    39→    39→  ArrowRight,
+    40→    40→  Sparkles,
+    41→    41→  Loader2,
+    42→    42→  Trophy,
+    43→    43→  Scale,
+    44→    44→  ArrowLeftRight,
+    45→    45→} from "lucide-react";
+    46→    46→
+    47→    47→interface AnalysisListItem {
+    48→    48→  id: string;
+    49→    49→  platform: string;
+    50→    50→  contentType: string;
+    51→    51→  title: string;
+    52→    52→  overallSentiment: string;
+    53→    53→  sentimentScore: number;
+    54→    54→  itemCount: number;
+    55→    55→  isPremium: boolean;
+    56→    56→  createdAt: string;
+    57→    57→}
+    58→    58→
+    59→    59→interface FullAnalysis extends AnalysisListItem {
+    60→    60→  results: AnalysisResult;
+    61→    61→}
+    62→    62→
+    63→    63→export function CompareTab() {
+    64→    64→  const [analyses, setAnalyses] = useState<AnalysisListItem[]>([]);
+    65→    65→  const [loading, setLoading] = useState(true);
+    66→    66→  const [idA, setIdA] = useState<string>("");
+    67→    67→  const [idB, setIdB] = useState<string>("");
+    68→    68→  const [fullA, setFullA] = useState<FullAnalysis | null>(null);
+    69→    69→  const [fullB, setFullB] = useState<FullAnalysis | null>(null);
+    70→    70→  const [loadingDetail, setLoadingDetail] = useState(false);
+    71→    71→
+    72→    72→  useEffect(() => {
+    73→    73→    let cancelled = false;
+    74→    74→    (async () => {
+    75→    75→      try {
+    76→    76→        const res = await fetch("/api/analyses");
+    77→    77→        if (!res.ok) return;
+    78→    78→        const data = await res.json();
+    79→    79→        if (cancelled) return;
+    80→    80→        setAnalyses(data.analyses || []);
+    81→    81→        // Auto-select first two
+    82→    82→        if (data.analyses?.length >= 2) {
+    83→    83→          setIdA(data.analyses[0].id);
+    84→    84→          setIdB(data.analyses[1].id);
+    85→    85→        } else if (data.analyses?.length === 1) {
+    86→    86→          setIdA(data.analyses[0].id);
+    87→    87→        }
+    88→    88→      } catch {
+    89→    89→        // silent
+    90→    90→      } finally {
+    91→    91→        if (!cancelled) setLoading(false);
+    92→    92→      }
+    93→    93→    })();
+    94→    94→    return () => {
+    95→    95→      cancelled = true;
+    96→    96→    };
+    97→    97→  }, []);
+    98→    98→
+    99→    99→  useEffect(() => {
+   100→   100→    if (!idA && !idB) return;
+   101→   101→    setLoadingDetail(true);
+   102→   102→    let cancelled = false;
+   103→   103→    (async () => {
+   104→   104→      const promises: Promise<FullAnalysis | null>[] = [];
+   105→   105→      if (idA) {
+   106→   106→        promises.push(
+   107→   107→          fetch(`/api/analyses/${idA}`)
+   108→   108→            .then((r) => (r.ok ? r.json() : null))
+   109→   109→            .then((d) => d?.analysis || null)
+   110→   110→            .catch(() => null)
+   111→   111→        );
+   112→   112→      } else {
+   113→   113→        promises.push(Promise.resolve(null));
+   114→   114→      }
+   115→   115→      if (idB) {
+   116→   116→        promises.push(
+   117→   117→          fetch(`/api/analyses/${idB}`)
+   118→   118→            .then((r) => (r.ok ? r.json() : null))
+   119→   119→            .then((d) => d?.analysis || null)
+   120→   120→            .catch(() => null)
+   121→   121→        );
+   122→   122→      } else {
+   123→   123→        promises.push(Promise.resolve(null));
+   124→   124→      }
+   125→   125→      const [a, b] = await Promise.all(promises);
+   126→   126→      if (!cancelled) {
+   127→   127→        setFullA(a);
+   128→   128→        setFullB(b);
+   129→   129→        setLoadingDetail(false);
+   130→   130→      }
+   131→   131→    })();
+   132→   132→    return () => {
+   133→   133→      cancelled = true;
+   134→   134→    };
+   135→   135→  }, [idA, idB]);
+   136→   136→
+   137→   137→  if (loading) {
+   138→   138→    return (
+   139→   139→      <div className="space-y-6">
+   140→   140→        <Skeleton className="h-10 w-64" />
+   141→   141→        <div className="grid gap-4 lg:grid-cols-2">
+   142→   142→          <Skeleton className="h-96" />
+   143→   143→          <Skeleton className="h-96" />
+   144→   144→        </div>
+   145→   145→      </div>
+   146→   146→    );
+   147→   147→  }
+   148→   148→
+   149→   149→  if (analyses.length < 2) {
+   150→   150→    return (
+   151→   151→      <div className="space-y-6">
+   152→   152→        <div>
+   153→   153→          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+   154→   154→            <GitCompare className="h-6 w-6 text-primary" />
+   155→   155→            Compare Analyses
+   156→   156→          </h1>
+   157→   157→          <p className="mt-1 text-sm text-muted-foreground">
+   158→   158→            Side-by-side comparison of two sentiment analyses to identify trends and differences.
+   159→   159→          </p>
+   160→   160→        </div>
+   161→   161→        <Card className="border-dashed">
+   162→   162→          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+   163→   163→            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+   164→   164→              <Scale className="h-7 w-7 text-primary" />
+   165→   165→            </div>
+   166→   166→            <h3 className="font-semibold">Need at least 2 analyses to compare</h3>
+   167→   167→            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+   168→   168→              You currently have {analyses.length} analysis{analyses.length === 1 ? "" : "es"}.
+   169→   169→              Run one more analysis to unlock the comparison view.
+   170→   170→            </p>
+   171→   171→          </CardContent>
+   172→   172→        </Card>
+   173→   173→      </div>
+   174→   174→    );
+   175→   175→  }
+   176→   176→
+   177→   177→  return (
+   178→   178→    <div className="space-y-6">
+   179→   179→      {/* Header */}
+   180→   180→      <motion.div
+   181→   181→        initial={{ opacity: 0, y: 8 }}
+   182→   182→        animate={{ opacity: 1, y: 0 }}
+   183→   183→        transition={{ duration: 0.3 }}
+   184→   184→      >
+   185→   185→        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+   186→   186→          <GitCompare className="h-6 w-6 text-primary" />
+   187→   187→          Compare Analyses
+   188→   188→        </h1>
+   189→   189→        <p className="mt-1 text-sm text-muted-foreground">
+   190→   190→          Side-by-side comparison of two sentiment analyses to identify trends and differences.
+   191→   191→        </p>
+   192→   192→      </motion.div>
+   193→   193→
+   194→   194→      {/* Selectors */}
+   195→   195→      <Card className="relative overflow-hidden border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.02] to-teal-500/[0.02]">
+   196→   196→        <CardContent className="p-5">
+   197→   197→          <div className="grid items-end gap-4 sm:grid-cols-[1fr_auto_1fr]">
+   198→   198→            <div className="space-y-2">
+   199→   199→              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+   200→   200→                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[9px] font-bold text-white">
+   201→   201→                  A
+   202→   202→                </span>
+   203→   203→                Analysis A
+   204→   204→              </label>
+   205→   205→              <Select value={idA} onValueChange={setIdA}>
+   206→   206→                <SelectTrigger>
+   207→   207→                  <SelectValue placeholder="Select first analysis" />
+   208→   208→                </SelectTrigger>
+   209→   209→                <SelectContent className="max-h-72">
+   210→   210→                  {analyses.map((a) => (
+   211→   211→                    <SelectItem key={a.id} value={a.id} disabled={a.id === idB}>
+   212→   212→                      {a.title} ({getPlatform(a.platform).label})
+   213→   213→                    </SelectItem>
+   214→   214→                  ))}
+   215→   215→                </SelectContent>
+   216→   216→              </Select>
+   217→   217→            </div>
+   218→   218→            <div className="flex flex-col items-center gap-1.5 pb-1">
+   219→   219→              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+   220→   220→                Swap
+   221→   221→              </span>
+   222→   222→              <Button
+   223→   223→                size="icon"
+   224→   224→                variant="outline"
+   225→   225→                onClick={() => {
+   226→   226→                  const tmp = idA;
+   227→   227→                  setIdA(idB);
+   228→   228→                  setIdB(tmp);
+   229→   229→                }}
+   230→   230→                disabled={!idA || !idB}
+   231→   231→                className="h-9 w-9 rounded-full border-emerald-500/30 bg-background text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700 dark:text-emerald-400"
+   232→   232→                aria-label="Swap A and B"
+   233→   233→                title="Swap A and B"
+   234→   234→              >
+   235→   235→                <ArrowLeftRight className="h-4 w-4" />
+   236→   236→              </Button>
+   237→   237→            </div>
+   238→   238→            <div className="space-y-2">
+   239→   239→              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400">
+   240→   240→                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-teal-500 text-[9px] font-bold text-white">
+   241→   241→                  B
+   242→   242→                </span>
+   243→   243→                Analysis B
+   244→   244→              </label>
+   245→   245→              <Select value={idB} onValueChange={setIdB}>
+   246→   246→                <SelectTrigger>
+   247→   247→                  <SelectValue placeholder="Select second analysis" />
+   248→   248→                </SelectTrigger>
+   249→   249→                <SelectContent className="max-h-72">
+   250→   250→                  {analyses.map((a) => (
+   251→   251→                    <SelectItem key={a.id} value={a.id} disabled={a.id === idA}>
+   252→   252→                      {a.title} ({getPlatform(a.platform).label})
+   253→   253→                    </SelectItem>
+   254→   254→                  ))}
+   255→   255→                </SelectContent>
+   256→   256→              </Select>
+   257→   257→            </div>
+   258→   258→          </div>
+   259→   259→        </CardContent>
+   260→   260→      </Card>
+   261→   261→
+   262→   262→      {loadingDetail ? (
+   263→   263→        <div className="grid gap-4 lg:grid-cols-2">
+   264→   264→          <Skeleton className="h-[500px]" />
+   265→   265→          <Skeleton className="h-[500px]" />
+   266→   266→        </div>
+   267→   267→      ) : fullA && fullB ? (
+   268→   268→        <ComparisonView a={fullA} b={fullB} />
+   269→   269→      ) : (
+   270→   270→        <Card className="border-dashed">
+   271→   271→          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+   272→   272→            Select two analyses above to see the comparison.
+   273→   273→          </CardContent>
+   274→   274→        </Card>
+   275→   275→      )}
+   276→   276→    </div>
+   277→   277→  );
+   278→   278→}
+   279→   279→
+   280→   280→function ComparisonView({ a, b }: { a: FullAnalysis; b: FullAnalysis }) {
+   281→   281→  const scoreDiff = b.sentimentScore - a.sentimentScore;
+   282→   282→  const itemDiff = b.itemCount - a.itemCount;
+   283→   283→
+   284→   284→  // Determine winner
+   285→   285→  const sentimentWinner = scoreDiff > 0 ? "B" : scoreDiff < 0 ? "A" : "tie";
+   286→   286→  const itemWinner = itemDiff > 0 ? "B" : itemDiff < 0 ? "A" : "tie";
+   287→   287→
+   288→   288→  // Emotion comparison
+   289→   289→  const allEmotions = Array.from(
+   290→   290→    new Set([
+   291→   291→      ...Object.keys(a.results.emotionDistribution),
+   292→   292→      ...Object.keys(b.results.emotionDistribution),
+   293→   293→    ])
+   294→   294→  ).filter((e) => EMOTIONS[e]);
+   295→   295→
+   296→   296→  return (
+   297→   297→    <motion.div
+   298→   298→      initial={{ opacity: 0 }}
+   299→   299→      animate={{ opacity: 1 }}
+   300→   300→      transition={{ duration: 0.3 }}
+   301→   301→      className="space-y-4"
+   302→   302→    >
+   303→   303→      {/* Summary comparison row */}
+   304→   304→      <div className="grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
+   305→   305→        <AnalysisHeader
+   306→   306→          analysis={a}
+   307→   307→          label="A"
+   308→   308→          color="emerald"
+   309→   309→          isWinner={sentimentWinner === "A"}
+   310→   310→        />
+   311→   311→        <div className="relative flex flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-border bg-gradient-to-br from-muted/40 to-muted/20 p-4 shadow-sm">
+   312→   312→          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/[0.04] to-teal-500/[0.04]" />
+   313→   313→          <span className="relative text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+   314→   314→            vs
+   315→   315→          </span>
+   316→   316→          <div className="relative flex items-center gap-1">
+   317→   317→            {scoreDiff > 0 ? (
+   318→   318→              <TrendingUp className="h-4 w-4 text-emerald-500" />
+   319→   319→            ) : scoreDiff < 0 ? (
+   320→   320→              <TrendingDown className="h-4 w-4 text-red-500" />
+   321→   321→            ) : (
+   322→   322→              <Minus className="h-4 w-4 text-muted-foreground" />
+   323→   323→            )}
+   324→   324→            <span
+   325→   325→              className={`text-sm font-bold tabular-nums ${
+   326→   326→                scoreDiff > 0
+   327→   327→                  ? "text-emerald-600 dark:text-emerald-400"
+   328→   328→                  : scoreDiff < 0
+   329→   329→                    ? "text-red-600 dark:text-red-400"
+   330→   330→                    : ""
+   331→   331→              }`}
+   332→   332→            >
+   333→   333→              {scoreDiff > 0 ? "+" : ""}
+   334→   334→              {scoreDiff.toFixed(2)}
+   335→   335→            </span>
+   336→   336→          </div>
+   337→   337→          <span className="relative text-[10px] text-muted-foreground">score delta</span>
+   338→   338→          {sentimentWinner !== "tie" && (
+   339→   339→            <Badge
+   340→   340→              variant="outline"
+   341→   341→              className="relative mt-1 gap-1 border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400"
+   342→   342→            >
+   343→   343→              <Trophy className="h-2.5 w-2.5" />
+   344→   344→              {sentimentWinner === "A" ? "A leads" : "B leads"}
+   345→   345→            </Badge>
+   346→   346→          )}
+   347→   347→        </div>
+   348→   348→        <AnalysisHeader
+   349→   349→          analysis={b}
+   350→   350→          label="B"
+   351→   351→          color="teal"
+   352→   352→          isWinner={sentimentWinner === "B"}
+   353→   353→        />
+   354→   354→      </div>
+   355→   355→
+   356→   356→      {/* Score gauges side by side */}
+   357→   357→      <Card>
+   358→   358→        <CardHeader>
+   359→   359→          <CardTitle className="flex items-center gap-2 text-base">
+   360→   360→            <Scale className="h-4 w-4 text-primary" />
+   361→   361→            Sentiment Score Comparison
+   362→   362→          </CardTitle>
+   363→   363→          <CardDescription>Overall sentiment score for each analysis</CardDescription>
+   364→   364→        </CardHeader>
+   365→   365→        <CardContent>
+   366→   366→          <div className="grid gap-4 sm:grid-cols-2">
+   367→   367→            <div className="space-y-2">
+   368→   368→              <div className="flex items-center justify-between">
+   369→   369→                <Badge className="bg-emerald-500/10 text-emerald-600">A</Badge>
+   370→   370→                {sentimentWinner === "A" && (
+   371→   371→                  <Badge className="gap-1 bg-amber-500/10 text-amber-600">
+   372→   372→                    <Trophy className="h-3 w-3" />
+   373→   373→                    More positive
+   374→   374→                  </Badge>
+   375→   375→                )}
+   376→   376→              </div>
+   377→   377→              <SentimentGauge score={a.sentimentScore} height={160} />
+   378→   378→            </div>
+   379→   379→            <div className="space-y-2">
+   380→   380→              <div className="flex items-center justify-between">
+   381→   381→                <Badge className="bg-teal-500/10 text-teal-600">B</Badge>
+   382→   382→                {sentimentWinner === "B" && (
+   383→   383→                  <Badge className="gap-1 bg-amber-500/10 text-amber-600">
+   384→   384→                    <Trophy className="h-3 w-3" />
+   385→   385→                    More positive
+   386→   386→                  </Badge>
+   387→   387→                )}
+   388→   388→              </div>
+   389→   389→              <SentimentGauge score={b.sentimentScore} height={160} />
+   390→   390→            </div>
+   391→   391→          </div>
+   392→   392→        </CardContent>
+   393→   393→      </Card>
+   394→   394→
+   395→   395→      {/* Sentiment distribution comparison */}
+   396→   396→      <Card>
+   397→   397→        <CardHeader>
+   398→   398→          <CardTitle className="text-base">Sentiment Distribution</CardTitle>
+   399→   399→          <CardDescription>Positive / Negative / Neutral breakdown</CardDescription>
+   400→   400→        </CardHeader>
+   401→   401→        <CardContent>
+   402→   402→          <div className="grid gap-4 sm:grid-cols-2">
+   403→   403→            <div className="space-y-2">
+   404→   404→              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600">Analysis A</Badge>
+   405→   405→              <SentimentPieChart distribution={a.results.sentimentDistribution} height={200} />
+   406→   406→            </div>
+   407→   407→            <div className="space-y-2">
+   408→   408→              <Badge variant="outline" className="bg-teal-500/10 text-teal-600">Analysis B</Badge>
+   409→   409→              <SentimentPieChart distribution={b.results.sentimentDistribution} height={200} />
+   410→   410→            </div>
+   411→   411→          </div>
+   412→   412→        </CardContent>
+   413→   413→      </Card>
+   414→   414→
+   415→   415→      {/* Emotion comparison table */}
+   416→   416→      <Card>
+   417→   417→        <CardHeader>
+   418→   418→          <CardTitle className="text-base">Emotion Breakdown</CardTitle>
+   419→   419→          <CardDescription>Item count per emotion, compared</CardDescription>
+   420→   420→        </CardHeader>
+   421→   421→        <CardContent>
+   422→   422→          <div className="overflow-x-auto">
+   423→   423→            <table className="w-full text-sm">
+   424→   424→              <thead>
+   425→   425→                <tr className="border-b border-border">
+   426→   426→                  <th className="py-2 text-left font-medium text-muted-foreground">Emotion</th>
+   427→   427→                  <th className="py-2 text-right font-medium text-muted-foreground">
+   428→   428→                    <span className="inline-flex items-center gap-1">
+   429→   429→                      <Badge className="bg-emerald-500/10 text-emerald-600 text-[10px]">A</Badge>
+   430→   430→                    </span>
+   431→   431→                  </th>
+   432→   432→                  <th className="py-2 text-right font-medium text-muted-foreground">
+   433→   433→                    <span className="inline-flex items-center gap-1">
+   434→   434→                      <Badge className="bg-teal-500/10 text-teal-600 text-[10px]">B</Badge>
+   435→   435→                    </span>
+   436→   436→                  </th>
+   437→   437→                  <th className="py-2 text-right font-medium text-muted-foreground">Difference</th>
+   438→   438→                </tr>
+   439→   439→              </thead>
+   440→   440→              <tbody>
+   441→   441→                {allEmotions.map((emotion) => {
+   442→   442→                  const countA = a.results.emotionDistribution[emotion] || 0;
+   443→   443→                  const countB = b.results.emotionDistribution[emotion] || 0;
+   444→   444→                  const diff = countB - countA;
+   445→   445→                  const e = EMOTIONS[emotion];
+   446→   446→                  return (
+   447→   447→                    <tr key={emotion} className="border-b border-border/50">
+   448→   448→                      <td className="py-2">
+   449→   449→                        <span className="inline-flex items-center gap-1.5">
+   450→   450→                          <span>{e.emoji}</span>
+   451→   451→                          <span className="font-medium">{e.label}</span>
+   452→   452→                        </span>
+   453→   453→                      </td>
+   454→   454→                      <td className="py-2 text-right tabular-nums">{countA}</td>
+   455→   455→                      <td className="py-2 text-right tabular-nums">{countB}</td>
+   456→   456→                      <td className="py-2 text-right tabular-nums">
+   457→   457→                        {diff === 0 ? (
+   458→   458→                          <span className="text-muted-foreground">—</span>
+   459→   459→                        ) : (
+   460→   460→                          <span className={diff > 0 ? "text-teal-600" : "text-emerald-600"}>
+   461→   461→                            {diff > 0 ? "+" : ""}
+   462→   462→                            {diff}
+   463→   463→                          </span>
+   464→   464→                        )}
+   465→   465→                      </td>
+   466→   466→                    </tr>
+   467→   467→                  );
+   468→   468→                })}
+   469→   469→              </tbody>
+   470→   470→            </table>
+   471→   471→          </div>
+   472→   472→        </CardContent>
+   473→   473→      </Card>
+   474→   474→
+   475→   475→      {/* Emotion Radar Chart - visual comparison */}
+   476→   476→      <Card>
+   477→   477→        <CardHeader>
+   478→   478→          <div className="flex items-center justify-between gap-3">
+   479→   479→            <div>
+   480→   480→              <CardTitle className="flex items-center gap-2 text-base">
+   481→   481→                <Sparkles className="h-4 w-4 text-primary" />
+   482→   482→                Emotion Radar
+   483→   483→              </CardTitle>
+   484→   484→              <CardDescription>
+   485→   485→                Multi-dimensional emotion profile overlay
+   486→   486→              </CardDescription>
+   487→   487→            </div>
+   488→   488→            <div className="flex items-center gap-2">
+   489→   489→              <Badge variant="outline" className="gap-1.5 bg-emerald-500/10 text-[10px] text-emerald-600 dark:text-emerald-400">
+   490→   490→                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+   491→   491→                A
+   492→   492→              </Badge>
+   493→   493→              <Badge variant="outline" className="gap-1.5 bg-teal-500/10 text-[10px] text-teal-600 dark:text-teal-400">
+   494→   494→                <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+   495→   495→                B
+   496→   496→              </Badge>
+   497→   497→            </div>
+   498→   498→          </div>
+   499→   499→        </CardHeader>
+   500→   500→        <CardContent>
+   501→   501→          <EmotionRadarChart a={a} b={b} />
+   502→   502→        </CardContent>
+   503→   503→      </Card>
+   504→   504→
+   505→   505→      {/* Key metrics comparison */}
+   506→   506→      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   507→   507→        <ComparisonMetric
+   508→   508→          label="Items Analyzed"
+   509→   509→          valueA={a.itemCount}
+   510→   510→          valueB={b.itemCount}
+   511→   511→          winner={itemWinner}
+   512→   512→          format="int"
+   513→   513→        />
+   514→   514→        <ComparisonMetric
+   515→   515→          label="Positive %"
+   516→   516→          valueA={a.results.sentimentDistribution.positive}
+   517→   517→          valueB={b.results.sentimentDistribution.positive}
+   518→   518→          winner={a.results.sentimentDistribution.positive > b.results.sentimentDistribution.positive ? "A" : b.results.sentimentDistribution.positive > a.results.sentimentDistribution.positive ? "B" : "tie"}
+   519→   519→          format="pct"
+   520→   520→        />
+   521→   521→        <ComparisonMetric
+   522→   522→          label="Negative %"
+   523→   523→          valueA={a.results.sentimentDistribution.negative}
+   524→   524→          valueB={b.results.sentimentDistribution.negative}
+   525→   525→          winner={a.results.sentimentDistribution.negative < b.results.sentimentDistribution.negative ? "A" : b.results.sentimentDistribution.negative < a.results.sentimentDistribution.negative ? "B" : "tie"}
+   526→   526→          format="pct"
+   527→   527→          invertColor
+   528→   528→        />
+   529→   529→        <ComparisonMetric
+   530→   530→          label="Dominant Emotion"
+   531→   531→          valueA={a.results.dominantEmotion}
+   532→   532→          valueB={b.results.dominantEmotion}
+   533→   533→          winner="tie"
+   534→   534→          format="emotion"
+   535→   535→        />
+   536→   536→      </div>
+   537→   537→
+   538→   538→      {/* AI Summaries side by side */}
+   539→   539→      <Card>
+   540→   540→        <CardHeader>
+   541→   541→          <CardTitle className="flex items-center gap-2 text-base">
+   542→   542→            <Sparkles className="h-4 w-4 text-primary" />
+   543→   543→            AI Summaries
+   544→   544→          </CardTitle>
+   545→   545→        </CardHeader>
+   546→   546→        <CardContent>
+   547→   547→          <div className="grid gap-4 sm:grid-cols-2">
+   548→   548→            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+   549→   549→              <Badge className="mb-2 bg-emerald-500/10 text-emerald-600">Analysis A</Badge>
+   550→   550→              <p className="text-sm leading-relaxed">{a.results.summary}</p>
+   551→   551→            </div>
+   552→   552→            <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-4">
+   553→   553→              <Badge className="mb-2 bg-teal-500/10 text-teal-600">Analysis B</Badge>
+   554→   554→              <p className="text-sm leading-relaxed">{b.results.summary}</p>
+   555→   555→            </div>
+   556→   556→          </div>
+   557→   557→        </CardContent>
+   558→   558→      </Card>
+   559→   559→    </motion.div>
+   560→   560→  );
+   561→   561→}
+   562→   562→
+   563→   563→function EmotionRadarChart({ a, b }: { a: FullAnalysis; b: FullAnalysis }) {
+   564→   564→  // Build radar data: one row per emotion, with A and B columns
+   565→   565→  const emotions = Array.from(
+   566→   566→    new Set([
+   567→   567→      ...Object.keys(a.results.emotionDistribution),
+   568→   568→      ...Object.keys(b.results.emotionDistribution),
+   569→   569→    ])
+   570→   570→  ).filter((e) => EMOTIONS[e]);
+   571→   571→
+   572→   572→  const data = emotions.map((emotion) => ({
+   573→   573→    emotion: EMOTIONS[emotion].label,
+   574→   574→    emoji: EMOTIONS[emotion].emoji,
+   575→   575→    A: a.results.emotionDistribution[emotion] || 0,
+   576→   576→    B: b.results.emotionDistribution[emotion] || 0,
+   577→   577→  }));
+   578→   578→
+   579→   579→  if (data.length === 0) {
+   580→   580→    return (
+   581→   581→      <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+   582→   582→        No emotion data to display
+   583→   583→      </div>
+   584→   584→    );
+   585→   585→  }
+   586→   586→
+   587→   587→  // Compute max for axis scaling
+   588→   588→  const maxVal = Math.max(
+   589→   589→    ...data.flatMap((d) => [d.A, d.B]),
+   590→   590→    1
+   591→   591→  );
+   592→   592→
+   593→   593→  return (
+   594→   594→    <div className="space-y-2">
+   595→   595→      <ResponsiveContainer width="100%" height={320}>
+   596→   596→        <RadarChart data={data} margin={{ top: 16, right: 30, left: 30, bottom: 16 }}>
+   597→   597→          <PolarGrid stroke="var(--border)" />
+   598→   598→          <PolarAngleAxis
+   599→   599→            dataKey="emotion"
+   600→   600→            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+   601→   601→          />
+   602→   602→          <PolarRadiusAxis
+   603→   603→            angle={90}
+   604→   604→            domain={[0, Math.ceil(maxVal * 1.1)]}
+   605→   605→            tick={{ fontSize: 9, fill: "var(--muted-foreground)" }}
+   606→   606→            axisLine={false}
+   607→   607→          />
+   608→   608→          <Radar
+   609→   609→            name="A"
+   610→   610→            dataKey="A"
+   611→   611→            stroke="#10b981"
+   612→   612→            strokeWidth={2}
+   613→   613→            fill="#10b981"
+   614→   614→            fillOpacity={0.25}
+   615→   615→            dot={{ r: 3, fill: "#10b981", strokeWidth: 1, stroke: "#fff" }}
+   616→   616→          />
+   617→   617→          <Radar
+   618→   618→            name="B"
+   619→   619→            dataKey="B"
+   620→   620→            stroke="#14b8a6"
+   621→   621→            strokeWidth={2}
+   622→   622→            fill="#14b8a6"
+   623→   623→            fillOpacity={0.2}
+   624→   624→            dot={{ r: 3, fill: "#14b8a6", strokeWidth: 1, stroke: "#fff" }}
+   625→   625→          />
+   626→   626→          <Tooltip
+   627→   627→            contentStyle={{
+   628→   628→              background: "var(--popover)",
+   629→   629→              border: "1px solid var(--border)",
+   630→   630→              borderRadius: "0.75rem",
+   631→   631→              color: "var(--popover-foreground)",
+   632→   632→              fontSize: "12px",
+   633→   633→              boxShadow: "0 10px 30px -10px rgba(0,0,0,0.2)",
+   634→   634→            }}
+   635→   635→            formatter={(value: number, name: string) => [
+   636→   636→              `${value} item${value === 1 ? "" : "s"}`,
+   637→   637→              name,
+   638→   638→            ]}
+   639→   639→          />
+   640→   640→          <Legend
+   641→   641→            wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
+   642→   642→            iconType="circle"
+   643→   643→          />
+   644→   644→        </RadarChart>
+   645→   645→      </ResponsiveContainer>
+   646→   646→      <p className="text-center text-[10px] text-muted-foreground">
+   647→   647→        Larger area = more items exhibiting that emotion. Overlapping regions
+   648→   648→        show emotional similarity between the two analyses.
+   649→   649→      </p>
+   650→   650→    </div>
+   651→   651→  );
+   652→   652→}
+   653→   653→
+   654→   654→function AnalysisHeader({
+   655→   655→  analysis,
+   656→   656→  label,
+   657→   657→  color,
+   658→   658→  isWinner,
+   659→   659→}: {
+   660→   660→  analysis: FullAnalysis;
+   661→   661→  label: string;
+   662→   662→  color: "emerald" | "teal";
+   663→   663→  isWinner?: boolean;
+   664→   664→}) {
+   665→   665→  const platform = getPlatform(analysis.platform);
+   666→   666→  const Icon = platform.icon;
+   667→   667→  const colorClasses = {
+   668→   668→    emerald: "from-emerald-500 to-emerald-600",
+   669→   669→    teal: "from-teal-500 to-teal-600",
+   670→   670→  };
+   671→   671→  return (
+   672→   672→    <Card
+   673→   673→      className={`relative overflow-hidden transition-all ${
+   674→   674→        isWinner
+   675→   675→          ? color === "emerald"
+   676→   676→            ? "border-emerald-500/50 shadow-md shadow-emerald-500/10"
+   677→   677→            : "border-teal-500/50 shadow-md shadow-teal-500/10"
+   678→   678→          : ""
+   679→   679→      }`}
+   680→   680→    >
+   681→   681→      <div className={`h-1.5 bg-gradient-to-r ${colorClasses[color]}`} />
+   682→   682→      {isWinner && (
+   683→   683→        <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-600 ring-1 ring-inset ring-amber-500/30 dark:text-amber-400">
+   684→   684→          <Trophy className="h-2.5 w-2.5" />
+   685→   685→          Leader
+   686→   686→        </div>
+   687→   687→      )}
+   688→   688→      <CardContent className="p-4">
+   689→   689→        <div className="mb-3 flex items-center justify-between">
+   690→   690→          <Badge className={`bg-${color}-500/10 text-${color}-600`}>{label}</Badge>
+   691→   691→          <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${colorClasses[color]} text-white`}>
+   692→   692→            <Icon className="h-4 w-4" />
+   693→   693→          </div>
+   694→   694→        </div>
+   695→   695→        <h3 className="line-clamp-2 font-semibold leading-tight">{analysis.title}</h3>
+   696→   696→        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+   697→   697→          <PlatformBadge platform={analysis.platform} />
+   698→   698→          <SentimentBadge sentiment={analysis.overallSentiment} />
+   699→   699→        </div>
+   700→   700→        <p className="mt-2 text-xs text-muted-foreground">
+   701→   701→          {analysis.itemCount} items • {new Date(analysis.createdAt).toLocaleDateString()}
+   702→   702→        </p>
+   703→   703→      </CardContent>
+   704→   704→    </Card>
+   705→   705→  );
+   706→   706→}
+   707→   707→
+   708→   708→function ComparisonMetric({
+   709→   709→  label,
+   710→   710→  valueA,
+   711→   711→  valueB,
+   712→   712→  winner,
+   713→   713→  format,
+   714→   714→  invertColor,
+   715→   715→}: {
+   716→   716→  label: string;
+   717→   717→  valueA: number | string;
+   718→   718→  valueB: number | string;
+   719→   719→  winner: "A" | "B" | "tie";
+   720→   720→  format: "int" | "pct" | "emotion";
+   721→   721→  invertColor?: boolean;
+   722→   722→}) {
+   723→   723→  function formatVal(v: number | string) {
+   724→   724→    if (format === "int") return String(v);
+   725→   725→    if (format === "pct") return `${v}%`;
+   726→   726→    if (format === "emotion") {
+   727→   727→      const e = EMOTIONS[v as string];
+   728→   728→      return e ? `${e.emoji} ${e.label}` : String(v);
+   729→   729→    }
+   730→   730→    return String(v);
+   731→   731→  }
+   732→   732→
+   733→   733→  // Winner gets a colored ring + crown
+   734→   734→  const aIsWinner = winner === "A";
+   735→   735→  const bIsWinner = winner === "B";
+   736→   736→
+   737→   737→  return (
+   738→   738→    <Card
+   739→   739→      className={`relative overflow-hidden transition-all ${
+   740→   740→        aIsWinner
+   741→   741→          ? "border-emerald-500/40 bg-emerald-500/[0.03]"
+   742→   742→          : bIsWinner
+   743→   743→            ? "border-teal-500/40 bg-teal-500/[0.03]"
+   744→   744→            : ""
+   745→   745→      }`}
+   746→   746→    >
+   747→   747→      <CardContent className="p-4">
+   748→   748→        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+   749→   749→          {label}
+   750→   750→        </p>
+   751→   751→        <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+   752→   752→          <div className="relative text-center">
+   753→   753→            {aIsWinner && (
+   754→   754→              <Trophy className="absolute -top-1 left-1/2 h-3 w-3 -translate-x-1/2 text-amber-500" />
+   755→   755→            )}
+   756→   756→            <p
+   757→   757→              className={`text-lg font-bold tabular-nums transition-colors ${
+   758→   758→                aIsWinner
+   759→   759→                  ? "text-emerald-600 dark:text-emerald-400"
+   760→   760→                  : "text-foreground"
+   761→   761→              }`}
+   762→   762→            >
+   763→   763→              {formatVal(valueA)}
+   764→   764→            </p>
+   765→   765→            <p className="text-[10px] text-muted-foreground">A</p>
+   766→   766→          </div>
+   767→   767→          <div className="flex flex-col items-center">
+   768→   768→            <span
+   769→   769→              className={`text-[9px] font-semibold uppercase ${
+   770→   770→                aIsWinner
+   771→   771→                  ? "text-emerald-500"
+   772→   772→                  : bIsWinner
+   773→   773→                    ? "text-teal-500"
+   774→   774→                    : "text-muted-foreground"
+   775→   775→              }`}
+   776→   776→            >
+   777→   777→              {aIsWinner ? "←" : bIsWinner ? "→" : "="}
+   778→   778→            </span>
+   779→   779→            <ArrowRight className="h-3 w-3 text-muted-foreground/60" />
+   780→   780→          </div>
+   781→   781→          <div className="relative text-center">
+   782→   782→            {bIsWinner && (
+   783→   783→              <Trophy className="absolute -top-1 left-1/2 h-3 w-3 -translate-x-1/2 text-amber-500" />
+   784→   784→            )}
+   785→   785→            <p
+   786→   786→              className={`text-lg font-bold tabular-nums transition-colors ${
+   787→   787→                bIsWinner
+   788→   788→                  ? "text-teal-600 dark:text-teal-400"
+   789→   789→                  : "text-foreground"
+   790→   790→              }`}
+   791→   791→            >
+   792→   792→              {formatVal(valueB)}
+   793→   793→            </p>
+   794→   794→            <p className="text-[10px] text-muted-foreground">B</p>
+   795→   795→          </div>
+   796→   796→        </div>
+   797→   797→        {invertColor && (
+   798→   798→          <p className="mt-2 text-center text-[10px] text-muted-foreground">
+   799→   799→            Lower is better
+   800→   800→          </p>
+   801→   801→        )}
+   802→   802→      </CardContent>
+   803→   803→    </Card>
+   804→   804→  );
+   805→   805→}
+   806→   806→

@@ -1,0 +1,793 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useState } from "react";
+     4→import { useSession } from "next-auth/react";
+     5→import { useAppStore } from "@/store/app-store";
+     6→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+     7→import { Button } from "@/components/ui/button";
+     8→import { Skeleton } from "@/components/ui/skeleton";
+     9→import { Badge } from "@/components/ui/badge";
+    10→import { SentimentBadge, PlatformBadge, PremiumBadge } from "@/components/shared/badges";
+    11→import { PlatformBarChart } from "@/components/shared/charts";
+    12→import {
+    13→  Sparkles,
+    14→  Crown,
+    15→  TrendingUp,
+    16→  TrendingDown,
+    17→  Meh,
+    18→  BarChart3,
+    19→  ArrowRight,
+    20→  Radio,
+    21→  History,
+    22→  Plus,
+    23→  Zap,
+    24→  CheckCircle2,
+    25→  XCircle,
+    26→  Clock,
+    27→  FlaskConical,
+    28→  Loader2,
+    29→  Youtube,
+    30→  MessageCircle,
+    31→  Instagram,
+    32→  Twitter,
+    33→} from "lucide-react";
+    34→import { motion } from "framer-motion";
+    35→import { getSentiment, PLATFORMS } from "@/lib/constants";
+    36→import { SAMPLE_DATASETS } from "@/lib/sample-data";
+    37→import { toast } from "sonner";
+    38→
+    39→interface AnalysisListItem {
+    40→  id: string;
+    41→  platform: string;
+    42→  contentType: string;
+    43→  title: string;
+    44→  overallSentiment: string;
+    45→  sentimentScore: number;
+    46→  itemCount: number;
+    47→  isPremium: boolean;
+    48→  createdAt: string;
+    49→}
+    50→
+    51→interface Stats {
+    52→  total: number;
+    53→  positive: number;
+    54→  negative: number;
+    55→  neutral: number;
+    56→  mixed: number;
+    57→  byPlatform: { youtube: number; reddit: number; x: number; instagram: number };
+    58→}
+    59→
+    60→export function OverviewTab() {
+    61→  const { data: session } = useSession();
+    62→  const setDashboardTab = useAppStore((s) => s.setDashboardTab);
+    63→  const setSelectedAnalysisId = useAppStore((s) => s.setSelectedAnalysisId);
+    64→
+    65→  const [analyses, setAnalyses] = useState<AnalysisListItem[]>([]);
+    66→  const [stats, setStats] = useState<Stats | null>(null);
+    67→  const [loading, setLoading] = useState(true);
+    68→  const [latestApplication, setLatestApplication] = useState<{
+    69→    status: string;
+    70→    platform: string;
+    71→    adminNote: string | null;
+    72→    reviewedAt: string | null;
+    73→  } | null>(null);
+    74→
+    75→  const isPremium =
+    76→    session?.user?.subscriptionTier === "PREMIUM" || session?.user?.role === "ADMIN";
+    77→  const userName = session?.user?.name?.split(" ")[0] || "there";
+    78→
+    79→  useEffect(() => {
+    80→    let cancelled = false;
+    81→    (async () => {
+    82→      try {
+    83→        const [analysesRes, appsRes] = await Promise.all([
+    84→          fetch("/api/analyses"),
+    85→          fetch("/api/premium/apply"),
+    86→        ]);
+    87→        if (!cancelled) {
+    88→          if (analysesRes.ok) {
+    89→            const data = await analysesRes.json();
+    90→            setAnalyses(data.analyses || []);
+    91→            setStats(data.stats || null);
+    92→          }
+    93→          if (appsRes.ok) {
+    94→            const appsData = await appsRes.json();
+    95→            const apps = appsData.applications || [];
+    96→            if (apps.length > 0) {
+    97→              // Get the most recent application
+    98→              setLatestApplication(apps[0]);
+    99→            }
+   100→          }
+   101→        }
+   102→      } catch {
+   103→        // silent — UI shows skeletons / empty state
+   104→      } finally {
+   105→        if (!cancelled) setLoading(false);
+   106→      }
+   107→    })();
+   108→    return () => {
+   109→      cancelled = true;
+   110→    };
+   111→  }, []);
+   112→
+   113→  // Show notification banner if latest application was recently reviewed (approved/rejected)
+   114→  // and user hasn't acknowledged it yet this session
+   115→  const showApprovedBanner =
+   116→    !isPremium &&
+   117→    latestApplication?.status === "APPROVED";
+   118→  const showRejectedBanner = latestApplication?.status === "REJECTED";
+   119→  const showPendingBanner =
+   120→    !isPremium &&
+   121→    latestApplication?.status === "PENDING";
+   122→
+   123→  const platformData = stats
+   124→    ? ([
+   125→        { platform: "youtube", count: stats.byPlatform.youtube },
+   126→        { platform: "reddit", count: stats.byPlatform.reddit },
+   127→        { platform: "x", count: stats.byPlatform.x },
+   128→        { platform: "instagram", count: stats.byPlatform.instagram },
+   129→      ].filter((d) => d.count > 0) as { platform: string; count: number }[])
+   130→    : [];
+   131→
+   132→  const recent = analyses.slice(0, 5);
+   133→
+   134→  const statCards = stats
+   135→    ? [
+   136→        {
+   137→          label: "Total Analyses",
+   138→          value: stats.total,
+   139→          icon: BarChart3,
+   140→          color: "from-emerald-500 to-teal-600",
+   141→          sub: "all-time",
+   142→        },
+   143→        {
+   144→          label: "Positive",
+   145→          value: stats.positive,
+   146→          icon: TrendingUp,
+   147→          color: "from-emerald-400 to-green-500",
+   148→          sub: `${stats.total ? Math.round((stats.positive / stats.total) * 100) : 0}% of total`,
+   149→        },
+   150→        {
+   151→          label: "Negative",
+   152→          value: stats.negative,
+   153→          icon: TrendingDown,
+   154→          color: "from-red-400 to-rose-500",
+   155→          sub: `${stats.total ? Math.round((stats.negative / stats.total) * 100) : 0}% of total`,
+   156→        },
+   157→        {
+   158→          label: "Neutral",
+   159→          value: stats.neutral,
+   160→          icon: Meh,
+   161→          color: "from-amber-400 to-yellow-500",
+   162→          sub: `${stats.total ? Math.round((stats.neutral / stats.total) * 100) : 0}% of total`,
+   163→        },
+   164→      ]
+   165→    : [];
+   166→
+   167→  return (
+   168→    <div className="space-y-6">
+   169→      {/* Welcome banner */}
+   170→      <motion.div
+   171→        initial={{ opacity: 0, y: 8 }}
+   172→        animate={{ opacity: 1, y: 0 }}
+   173→        transition={{ duration: 0.4 }}
+   174→        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-6 text-white shadow-xl shadow-emerald-500/30 ring-1 ring-emerald-400/20 sm:p-8"
+   175→      >
+   176→        {/* Decorative glows */}
+   177→        <div className="absolute -right-12 -top-12 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
+   178→        <div className="absolute -bottom-20 right-20 h-40 w-40 rounded-full bg-amber-400/25 blur-3xl" />
+   179→        <div className="absolute -left-16 bottom-0 h-32 w-32 rounded-full bg-cyan-400/15 blur-3xl" />
+   180→        {/* Subtle dotted pattern overlay */}
+   181→        <div
+   182→          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+   183→          style={{
+   184→            backgroundImage:
+   185→              "radial-gradient(circle, white 1px, transparent 1px)",
+   186→            backgroundSize: "18px 18px",
+   187→          }}
+   188→        />
+   189→        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+   190→          <div>
+   191→            <div className="flex items-center gap-2">
+   192→              <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-50 ring-1 ring-inset ring-white/20">
+   193→                Dashboard
+   194→              </span>
+   195→              {isPremium && <PremiumBadge />}
+   196→            </div>
+   197→            <h1 className="mt-2 text-2xl font-bold tracking-tight drop-shadow-sm sm:text-3xl">
+   198→              Welcome back, {userName}!
+   199→            </h1>
+   200→            <p className="mt-2 max-w-lg text-sm text-emerald-50/90">
+   201→              {isPremium
+   202→                ? "You have premium access. Analyze live streams and unlock advanced insights."
+   203→                : "Analyze sentiment and emotion across YouTube, Reddit, X, and Instagram with transformer-powered AI."}
+   204→            </p>
+   205→          </div>
+   206→          <div className="flex flex-wrap gap-2">
+   207→            <Button
+   208→              onClick={() => setDashboardTab("new-analysis")}
+   209→              className="bg-white text-emerald-700 shadow-lg shadow-emerald-900/20 hover:bg-emerald-50 hover:shadow-emerald-900/30"
+   210→            >
+   211→              <Sparkles className="mr-1.5 h-4 w-4" />
+   212→              New Analysis
+   213→            </Button>
+   214→            {!isPremium && (
+   215→              <Button
+   216→                onClick={() => setDashboardTab("premium")}
+   217→                variant="outline"
+   218→                className="border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 hover:border-white/60"
+   219→              >
+   220→                <Crown className="mr-1.5 h-4 w-4" />
+   221→                Go Premium
+   222→              </Button>
+   223→            )}
+   224→          </div>
+   225→        </div>
+   226→      </motion.div>
+   227→
+   228→      {/* Premium application status banners */}
+   229→      {!loading && showApprovedBanner && (
+   230→        <motion.div
+   231→          initial={{ opacity: 0, y: 8 }}
+   232→          animate={{ opacity: 1, y: 0 }}
+   233→          transition={{ duration: 0.4 }}
+   234→        >
+   235→          <Card className="border-emerald-500/50 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/10 shadow-sm shadow-emerald-500/10">
+   236→            <CardContent className="flex items-center gap-3 p-4">
+   237→              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/30">
+   238→                <CheckCircle2 className="h-5 w-5" />
+   239→              </div>
+   240→              <div className="flex-1">
+   241→                <p className="flex items-center gap-2 text-sm font-bold text-emerald-700 dark:text-emerald-300">
+   242→                  Premium access granted!
+   243→                  <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+   244→                    Approved
+   245→                  </span>
+   246→                </p>
+   247→                <p className="mt-0.5 text-xs text-emerald-800/70 dark:text-emerald-200/70">
+   248→                  Your application was approved. You now have access to live
+   249→                  stream analysis and all premium features.
+   250→                </p>
+   251→              </div>
+   252→              <Button
+   253→                size="sm"
+   254→                onClick={() => setDashboardTab("livestream")}
+   255→                className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90"
+   256→              >
+   257→                Try Live Stream
+   258→                <ArrowRight className="ml-1 h-3.5 w-3.5" />
+   259→              </Button>
+   260→            </CardContent>
+   261→          </Card>
+   262→        </motion.div>
+   263→      )}
+   264→
+   265→      {!loading && showRejectedBanner && (
+   266→        <motion.div
+   267→          initial={{ opacity: 0, y: 8 }}
+   268→          animate={{ opacity: 1, y: 0 }}
+   269→          transition={{ duration: 0.4 }}
+   270→        >
+   271→          <Card className="border-red-500/50 bg-gradient-to-r from-red-500/15 via-rose-500/10 to-red-500/10 shadow-sm shadow-red-500/10">
+   272→            <CardContent className="flex items-center gap-3 p-4">
+   273→              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-md shadow-red-500/30">
+   274→                <XCircle className="h-5 w-5" />
+   275→              </div>
+   276→              <div className="flex-1">
+   277→                <p className="flex items-center gap-2 text-sm font-bold text-red-700 dark:text-red-300">
+   278→                  Premium application not approved
+   279→                  <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">
+   280→                    Rejected
+   281→                  </span>
+   282→                </p>
+   283→                <p className="mt-0.5 text-xs text-red-800/70 dark:text-red-200/70">
+   284→                  {latestApplication?.adminNote
+   285→                    ? `Admin note: ${latestApplication.adminNote}`
+   286→                    : "You can reapply with an updated use case description."}
+   287→                </p>
+   288→              </div>
+   289→              <Button
+   290→                size="sm"
+   291→                variant="outline"
+   292→                onClick={() => setDashboardTab("premium")}
+   293→              >
+   294→                Reapply
+   295→              </Button>
+   296→            </CardContent>
+   297→          </Card>
+   298→        </motion.div>
+   299→      )}
+   300→
+   301→      {!loading && showPendingBanner && (
+   302→        <motion.div
+   303→          initial={{ opacity: 0, y: 8 }}
+   304→          animate={{ opacity: 1, y: 0 }}
+   305→          transition={{ duration: 0.4 }}
+   306→        >
+   307→          <Card className="border-amber-500/50 bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-orange-500/10 shadow-sm shadow-amber-500/10">
+   308→            <CardContent className="flex items-center gap-3 p-4">
+   309→              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/30">
+   310→                <Clock className="h-5 w-5" />
+   311→              </div>
+   312→              <div className="flex-1">
+   313→                <p className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-300">
+   314→                  Premium application under review
+   315→                  <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+   316→                    Pending
+   317→                  </span>
+   318→                </p>
+   319→                <p className="mt-0.5 text-xs text-amber-800/70 dark:text-amber-200/70">
+   320→                  Your request for{" "}
+   321→                  <span className="font-semibold">
+   322→                    {latestApplication?.platform}
+   323→                  </span>{" "}
+   324→                  live stream analysis is pending admin approval.
+   325→                  You&apos;ll be notified here once reviewed.
+   326→                </p>
+   327→              </div>
+   328→            </CardContent>
+   329→          </Card>
+   330→        </motion.div>
+   331→      )}
+   332→
+   333→      {/* Stat cards */}
+   334→      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+   335→        {loading
+   336→          ? Array.from({ length: 4 }).map((_, i) => (
+   337→              <Card key={i}>
+   338→                <CardContent className="p-5">
+   339→                  <Skeleton className="h-4 w-24" />
+   340→                  <Skeleton className="mt-3 h-8 w-16" />
+   341→                  <Skeleton className="mt-2 h-3 w-20" />
+   342→                </CardContent>
+   343→              </Card>
+   344→            ))
+   345→          : statCards.map((s, i) => {
+   346→              const Icon = s.icon;
+   347→              return (
+   348→                <motion.div
+   349→                  key={s.label}
+   350→                  initial={{ opacity: 0, y: 8 }}
+   351→                  animate={{ opacity: 1, y: 0 }}
+   352→                  transition={{ duration: 0.3, delay: i * 0.05 }}
+   353→                  whileHover={{ y: -2 }}
+   354→                >
+   355→                  <Card className="group relative overflow-hidden border-border/60 shadow-sm transition-all hover:shadow-md hover:border-border">
+   356→                    {/* Top accent gradient bar */}
+   357→                    <div
+   358→                      className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${s.color} opacity-80`}
+   359→                    />
+   360→                    <CardContent className="p-5">
+   361→                      <div className="flex items-start justify-between gap-3">
+   362→                        <div className="min-w-0">
+   363→                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+   364→                            {s.label}
+   365→                          </p>
+   366→                          <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight">
+   367→                            {s.value}
+   368→                          </p>
+   369→                          <p className="mt-1 text-xs text-muted-foreground">{s.sub}</p>
+   370→                        </div>
+   371→                        <div
+   372→                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${s.color} text-white shadow-md transition-transform group-hover:scale-105`}
+   373→                        >
+   374→                          <Icon className="h-5 w-5" />
+   375→                        </div>
+   376→                      </div>
+   377→                    </CardContent>
+   378→                  </Card>
+   379→                </motion.div>
+   380→              );
+   381→            })}
+   382→      </div>
+   383→
+   384→      {/* Quick Sample Analysis widget */}
+   385→      <QuickSampleWidget isPremium={isPremium} />
+   386→
+   387→      {/* Charts + Recent */}
+   388→      <div className="grid gap-6 lg:grid-cols-5">
+   389→        {/* Platform breakdown */}
+   390→        <Card className="lg:col-span-2">
+   391→          <CardHeader>
+   392→            <CardTitle className="flex items-center gap-2 text-base">
+   393→              <BarChart3 className="h-4 w-4 text-primary" />
+   394→              Platform Breakdown
+   395→            </CardTitle>
+   396→            <CardDescription>
+   397→              Distribution of your analyses by platform
+   398→            </CardDescription>
+   399→          </CardHeader>
+   400→          <CardContent>
+   401→            {loading ? (
+   402→              <Skeleton className="h-[220px] w-full" />
+   403→            ) : platformData.length === 0 ? (
+   404→              <EmptyChart message="No analyses yet. Run your first analysis to see the breakdown." />
+   405→            ) : (
+   406→              <PlatformBarChart data={platformData} />
+   407→            )}
+   408→          </CardContent>
+   409→        </Card>
+   410→
+   411→        {/* Recent analyses */}
+   412→        <Card className="lg:col-span-3">
+   413→          <CardHeader className="flex-row items-center justify-between">
+   414→            <div>
+   415→              <CardTitle className="flex items-center gap-2 text-base">
+   416→                <History className="h-4 w-4 text-primary" />
+   417→                Recent Analyses
+   418→              </CardTitle>
+   419→              <CardDescription>Your 5 most recent runs</CardDescription>
+   420→            </div>
+   421→            <Button
+   422→              variant="ghost"
+   423→              size="sm"
+   424→              onClick={() => setDashboardTab("my-analyses")}
+   425→              className="text-primary"
+   426→            >
+   427→              View all
+   428→              <ArrowRight className="ml-1 h-3.5 w-3.5" />
+   429→            </Button>
+   430→          </CardHeader>
+   431→          <CardContent>
+   432→            {loading ? (
+   433→              <div className="space-y-3">
+   434→                {Array.from({ length: 4 }).map((_, i) => (
+   435→                  <Skeleton key={i} className="h-14 w-full" />
+   436→                ))}
+   437→              </div>
+   438→            ) : recent.length === 0 ? (
+   439→              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-10 text-center">
+   440→                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
+   441→                  <Plus className="h-6 w-6 text-primary" />
+   442→                </div>
+   443→                <p className="text-sm font-medium">No analyses yet</p>
+   444→                <p className="mt-1 text-xs text-muted-foreground">
+   445→                  Start your first sentiment analysis to see results here.
+   446→                </p>
+   447→                <Button
+   448→                  size="sm"
+   449→                  onClick={() => setDashboardTab("new-analysis")}
+   450→                  className="mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90"
+   451→                >
+   452→                  <Sparkles className="mr-1.5 h-4 w-4" />
+   453→                  New Analysis
+   454→                </Button>
+   455→              </div>
+   456→            ) : (
+   457→              <ul className="space-y-1.5">
+   458→                {recent.map((a) => (
+   459→                  <li key={a.id}>
+   460→                    <button
+   461→                      onClick={() => {
+   462→                        setSelectedAnalysisId(a.id);
+   463→                      }}
+   464→                      className="group flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-all hover:border-border hover:bg-accent/50"
+   465→                    >
+   466→                      <div
+   467→                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white"
+   468→                        style={{
+   469→                          background: `linear-gradient(135deg, ${sentimentColor(a.overallSentiment)} 0%, ${sentimentColor(a.overallSentiment)}cc 100%)`,
+   470→                        }}
+   471→                      >
+   472→                        <span className="text-xs font-bold tabular-nums">
+   473→                          {a.sentimentScore > 0 ? "+" : ""}
+   474→                          {a.sentimentScore.toFixed(1)}
+   475→                        </span>
+   476→                      </div>
+   477→                      <div className="min-w-0 flex-1">
+   478→                        <p className="truncate text-sm font-medium">{a.title}</p>
+   479→                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+   480→                          <PlatformBadge platform={a.platform} />
+   481→                          <SentimentBadge sentiment={a.overallSentiment} />
+   482→                          <span className="text-[11px] text-muted-foreground">
+   483→                            {a.itemCount} items • {formatDate(a.createdAt)}
+   484→                          </span>
+   485→                        </div>
+   486→                      </div>
+   487→                      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+   488→                    </button>
+   489→                  </li>
+   490→                ))}
+   491→              </ul>
+   492→            )}
+   493→          </CardContent>
+   494→        </Card>
+   495→      </div>
+   496→
+   497→      {/* Quick actions + Premium upsell */}
+   498→      <div className="grid gap-4 lg:grid-cols-3">
+   499→        <Card
+   500→          className="group cursor-pointer border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 transition-all hover:border-emerald-500/40"
+   501→          onClick={() => setDashboardTab("new-analysis")}
+   502→        >
+   503→          <CardContent className="flex items-center gap-4 p-5">
+   504→            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20">
+   505→              <Sparkles className="h-6 w-6" />
+   506→            </div>
+   507→            <div className="flex-1">
+   508→              <p className="font-semibold">Start a New Analysis</p>
+   509→              <p className="text-xs text-muted-foreground">
+   510→                Paste content or pick a sample dataset
+   511→              </p>
+   512→            </div>
+   513→            <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+   514→          </CardContent>
+   515→        </Card>
+   516→
+   517→        <Card
+   518→          className="group cursor-pointer border-border/60 transition-all hover:border-primary/40"
+   519→          onClick={() => setDashboardTab("my-analyses")}
+   520→        >
+   521→          <CardContent className="flex items-center gap-4 p-5">
+   522→            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-secondary-foreground">
+   523→              <History className="h-6 w-6" />
+   524→            </div>
+   525→            <div className="flex-1">
+   526→              <p className="font-semibold">Browse My Analyses</p>
+   527→              <p className="text-xs text-muted-foreground">
+   528→                View, download, or delete past runs
+   529→              </p>
+   530→            </div>
+   531→            <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+   532→          </CardContent>
+   533→        </Card>
+   534→
+   535→        {isPremium ? (
+   536→          <Card
+   537→            className="group cursor-pointer border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-orange-500/5 transition-all hover:border-amber-500/40"
+   538→            onClick={() => setDashboardTab("livestream")}
+   539→          >
+   540→            <CardContent className="flex items-center gap-4 p-5">
+   541→              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20">
+   542→                <Radio className="h-6 w-6" />
+   543→              </div>
+   544→              <div className="flex-1">
+   545→                <p className="font-semibold">Live Stream Analysis</p>
+   546→                <p className="text-xs text-muted-foreground">
+   547→                  Real-time chat sentiment monitoring
+   548→                </p>
+   549→              </div>
+   550→              <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+   551→            </CardContent>
+   552→          </Card>
+   553→        ) : (
+   554→          <Card
+   555→            className="group relative cursor-pointer overflow-hidden border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/10 transition-all hover:border-amber-500/60"
+   556→            onClick={() => setDashboardTab("premium")}
+   557→          >
+   558→            <CardContent className="flex items-center gap-4 p-5">
+   559→              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30">
+   560→                <Crown className="h-6 w-6" />
+   561→              </div>
+   562→              <div className="flex-1">
+   563→                <div className="flex items-center gap-1.5">
+   564→                  <p className="font-semibold">Upgrade to Premium</p>
+   565→                  <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 px-1.5 py-0 text-[9px] text-white">
+   566→                    <Zap className="h-2.5 w-2.5" />PRO
+   567→                  </Badge>
+   568→                </div>
+   569→                <p className="text-xs text-muted-foreground">
+   570→                  Unlock live stream analysis & more
+   571→                </p>
+   572→              </div>
+   573→              <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+   574→            </CardContent>
+   575→          </Card>
+   576→        )}
+   577→      </div>
+   578→
+   579→      {/* Premium upsell banner for free users */}
+   580→      {!isPremium && !loading && (
+   581→        <motion.div
+   582→          initial={{ opacity: 0, y: 8 }}
+   583→          animate={{ opacity: 1, y: 0 }}
+   584→          transition={{ duration: 0.4, delay: 0.2 }}
+   585→        >
+   586→          <Card className="relative overflow-hidden border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-rose-500/10">
+   587→            <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-amber-500/10 blur-3xl" />
+   588→            <CardContent className="relative flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+   589→              <div className="flex items-start gap-4">
+   590→                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30">
+   591→                  <Radio className="h-6 w-6" />
+   592→                </div>
+   593→                <div>
+   594→                  <h3 className="text-base font-semibold">
+   595→                    Live Stream Sentiment Analysis
+   596→                  </h3>
+   597→                  <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+   598→                    Monitor chat sentiment in real time during live broadcasts.
+   599→                    Get per-segment emotion tracking and a running sentiment
+   600→                    trend line. A premium feature powered by the transformer
+   601→                    model.
+   602→                  </p>
+   603→                </div>
+   604→              </div>
+   605→              <Button
+   606→                onClick={() => setDashboardTab("premium")}
+   607→                className="shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90"
+   608→              >
+   609→                <Crown className="mr-1.5 h-4 w-4" />
+   610→                Apply for Premium
+   611→              </Button>
+   612→            </CardContent>
+   613→          </Card>
+   614→        </motion.div>
+   615→      )}
+   616→    </div>
+   617→  );
+   618→}
+   619→
+   620→function EmptyChart({ message }: { message: string }) {
+   621→  return (
+   622→    <div className="flex h-[220px] flex-col items-center justify-center text-center">
+   623→      <BarChart3 className="mb-2 h-8 w-8 text-muted-foreground/40" />
+   624→      <p className="max-w-xs text-xs text-muted-foreground">{message}</p>
+   625→    </div>
+   626→  );
+   627→}
+   628→
+   629→function sentimentColor(s: string): string {
+   630→  return getSentiment(s).color;
+   631→}
+   632→
+   633→function formatDate(iso: string): string {
+   634→  const d = new Date(iso);
+   635→  const now = new Date();
+   636→  const diff = (now.getTime() - d.getTime()) / 1000;
+   637→  if (diff < 60) return "just now";
+   638→  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+   639→  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+   640→  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+   641→  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+   642→}
+   643→
+   644→// Platform icon helper for sample widget
+   645→function PlatformIcon({ platform, className }: { platform: string; className?: string }) {
+   646→  const Icon =
+   647→    platform === "youtube"
+   648→      ? Youtube
+   649→      : platform === "reddit"
+   650→      ? MessageCircle
+   651→      : platform === "instagram"
+   652→      ? Instagram
+   653→      : Twitter;
+   654→  return <Icon className={className} />;
+   655→}
+   656→
+   657→function QuickSampleWidget({ isPremium }: { isPremium: boolean }) {
+   658→  const setSelectedAnalysisId = useAppStore((s) => s.setSelectedAnalysisId);
+   659→  const [runningId, setRunningId] = useState<string | null>(null);
+   660→
+   661→  // Filter out the premium livestream sample for free users
+   662→  const samples = SAMPLE_DATASETS.filter(
+   663→    (s) => s.contentType !== "livestream" || isPremium
+   664→  );
+   665→
+   666→  async function runSample(sample: (typeof samples)[number]) {
+   667→    setRunningId(sample.id);
+   668→    try {
+   669→      const res = await fetch("/api/analyze", {
+   670→        method: "POST",
+   671→        headers: { "Content-Type": "application/json" },
+   672→        body: JSON.stringify({
+   673→          platform: sample.platform,
+   674→          contentType: sample.contentType,
+   675→          title: sample.title,
+   676→          sampleId: sample.id,
+   677→        }),
+   678→      });
+   679→      const data = await res.json();
+   680→      if (!res.ok) {
+   681→        throw new Error(data.error || "Analysis failed");
+   682→      }
+   683→      toast.success("Analysis complete! Opening results…");
+   684→      setSelectedAnalysisId(data.analysisId);
+   685→    } catch (err) {
+   686→      toast.error(err instanceof Error ? err.message : "Analysis failed");
+   687→    } finally {
+   688→      setRunningId(null);
+   689→    }
+   690→  }
+   691→
+   692→  return (
+   693→    <Card className="relative overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.03] via-card to-teal-500/[0.03]">
+   694→      <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-emerald-500/5 blur-3xl" />
+   695→      <CardHeader className="pb-3">
+   696→        <div className="flex items-center justify-between gap-3">
+   697→          <div>
+   698→            <CardTitle className="flex items-center gap-2 text-base">
+   699→              <FlaskConical className="h-4 w-4 text-primary" />
+   700→              Quick Demo — Try a Sample
+   701→            </CardTitle>
+   702→            <CardDescription className="text-xs">
+   703→              One-click analysis with realistic social media datasets — perfect
+   704→              for first-time users
+   705→            </CardDescription>
+   706→          </div>
+   707→          <Badge variant="outline" className="hidden gap-1 text-[10px] sm:flex">
+   708→            <Zap className="h-3 w-3 text-amber-500" />
+   709→            {samples.length} samples
+   710→          </Badge>
+   711→        </div>
+   712→      </CardHeader>
+   713→      <CardContent>
+   714→        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+   715→          {samples.map((sample, i) => {
+   716→            const isRunning = runningId === sample.id;
+   717→            const isDisabled = runningId !== null;
+   718→            const P = PLATFORMS[sample.platform as keyof typeof PLATFORMS];
+   719→            return (
+   720→              <motion.div
+   721→                key={sample.id}
+   722→                initial={{ opacity: 0, y: 8 }}
+   723→                animate={{ opacity: 1, y: 0 }}
+   724→                transition={{ duration: 0.3, delay: i * 0.04 }}
+   725→                whileHover={{ y: -2 }}
+   726→                className={`group relative flex flex-col rounded-xl border border-border/60 bg-card/80 p-3.5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md ${
+   727→                  isDisabled && !isRunning ? "opacity-60" : ""
+   728→                }`}
+   729→              >
+   730→                {/* Platform accent strip */}
+   731→                <div
+   732→                  className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl"
+   733→                  style={{
+   734→                    background: `linear-gradient(to right, ${P?.color || "#10b981"}, ${P?.color || "#10b981"}99)`,
+   735→                  }}
+   736→                />
+   737→                <div className="flex items-start justify-between gap-2">
+   738→                  <div
+   739→                    className="flex h-9 w-9 items-center justify-center rounded-lg text-white shadow-sm"
+   740→                    style={{
+   741→                      background: `linear-gradient(135deg, ${P?.color || "#10b981"} 0%, ${P?.color || "#10b981"}cc 100%)`,
+   742→                    }}
+   743→                  >
+   744→                    <PlatformIcon platform={sample.platform} className="h-4 w-4" />
+   745→                  </div>
+   746→                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+   747→                    {P?.label}
+   748→                  </span>
+   749→                </div>
+   750→                <p className="mt-2 line-clamp-2 text-xs font-semibold leading-snug">
+   751→                  {sample.title}
+   752→                </p>
+   753→                <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-muted-foreground">
+   754→                  {sample.description}
+   755→                </p>
+   756→                <div className="mt-2 flex items-center justify-between">
+   757→                  <span className="text-[10px] text-muted-foreground">
+   758→                    {sample.items.length} items
+   759→                  </span>
+   760→                  <Button
+   761→                    size="sm"
+   762→                    onClick={() => runSample(sample)}
+   763→                    disabled={isDisabled}
+   764→                    className="h-7 gap-1 bg-gradient-to-r from-emerald-500 to-teal-600 px-2.5 text-[11px] text-white hover:opacity-90"
+   765→                  >
+   766→                    {isRunning ? (
+   767→                      <>
+   768→                        <Loader2 className="h-3 w-3 animate-spin" />
+   769→                        Running
+   770→                      </>
+   771→                    ) : (
+   772→                      <>
+   773→                        <Sparkles className="h-3 w-3" />
+   774→                        Run
+   775→                      </>
+   776→                    )}
+   777→                  </Button>
+   778→                </div>
+   779→              </motion.div>
+   780→            );
+   781→          })}
+   782→        </div>
+   783→        <p className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+   784→          <Sparkles className="h-3 w-3 text-primary" />
+   785→          Click <span className="font-medium">Run</span> on any sample — the
+   786→          transformer model analyzes all items and opens a detailed report in
+   787→          seconds.
+   788→        </p>
+   789→      </CardContent>
+   790→    </Card>
+   791→  );
+   792→}
+   793→

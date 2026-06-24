@@ -1,0 +1,22 @@
+[
+  {"text": "This video tutorial is absolutely fantastic! Learned so much.", "label": 1},
+  {"text": "Worst content ever, complete waste of time.", "label": 0},
+  {"text": "It's an okay video, nothing extraordinary.", "label": 2},
+  {"text": "Amazing live stream! The host was so engaging and informative.", "label": 1},
+  {"text": "The comments section is full of toxic negativity.", "label": 0},
+  {"text": "Interesting discussion on Reddit, both sides make valid points.", "label": 2},
+  {"text": "Love this Instagram reel, the editing is on point!", "label": 1},
+  {"text": "This tweet is spreading false information, very dangerous.", "label": 0},
+  {"text": "Meh, seen better posts on my feed today.", "label": 2},
+  {"text": "Outstanding analysis in this thread, bookmarked for later.", "label": 1},
+  {"text": "I'm really disappointed with the quality of this stream.", "label": 0},
+  {"text": "Neither good nor bad, just average content.", "label": 2},
+  {"text": "Bahut accha video hai, sabko dekhna chahiye!", "label": 1},
+  {"text": "Bilkul bekaar content, time waste mat karo.", "label": 0},
+  {"text": "The emotion in this post is overwhelming, so touching.", "label": 1},
+  {"text": "Angry and frustrated after watching this debate.", "label": 0},
+  {"text": "Surprised by the plot twist in this video review!", "label": 1},
+  {"text": "Scared about what this trend means for society.", "label": 0},
+  {"text": "Joyful celebration in the comments, everyone is happy!", "label": 1},
+  {"text": "Sad to see such negativity in the discussion.", "label": 0}
+]

@@ -1,0 +1,79 @@
+// Prisma schema for Sentiment & Emotion Analysis Dashboard
+// Developed by Group No 38
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  name             String
+  password         String
+  role             String   @default("USER") // USER | ADMIN
+  subscriptionTier String   @default("FREE") // FREE | PREMIUM
+  avatar           String?
+  bio              String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  analyses      Analysis[]
+  applications  PremiumApplication[]
+  activityLogs  ActivityLog[]
+}
+
+model Analysis {
+  id            String   @id @default(cuid())
+  userId        String
+  platform      String   // youtube | reddit | x | instagram
+  contentType   String   // video | livestream | post | reel | discussion | short
+  title         String
+  sourceUrl     String?
+  contentItems  String   // JSON array of analyzed text items
+  results       String   // JSON of analysis results
+  overallSentiment String // positive | negative | neutral | mixed
+  sentimentScore Float   // -1.0 to 1.0
+  itemCount     Int
+  isPremium     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([platform])
+}
+
+model PremiumApplication {
+  id          String    @id @default(cuid())
+  userId      String
+  reason      String
+  platform    String    // which platform for live stream
+  useCase     String
+  status      String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  adminNote   String?
+  createdAt   DateTime  @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String?
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([userId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // login | register | analysis | apply_premium | download_report | etc.
+  detail    String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

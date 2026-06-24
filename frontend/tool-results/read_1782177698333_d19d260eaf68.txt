@@ -1,0 +1,916 @@
+     1→     1→"use client";
+     2→     2→
+     3→     3→import { useAppStore } from "@/store/app-store";
+     4→     4→import { Footer } from "@/components/shared/footer";
+     5→     5→import { Button } from "@/components/ui/button";
+     6→     6→import { Card, CardContent } from "@/components/ui/card";
+     7→     7→import { Badge } from "@/components/ui/badge";
+     8→     8→import { PLATFORMS, GROUP_INFO } from "@/lib/constants";
+     9→     9→import {
+    10→    10→  Accordion,
+    11→    11→  AccordionContent,
+    12→    12→  AccordionItem,
+    13→    13→  AccordionTrigger,
+    14→    14→} from "@/components/ui/accordion";
+    15→    15→import {
+    16→    16→  Brain,
+    17→    17→  Youtube,
+    18→    18→  MessageCircle,
+    19→    19→  Twitter,
+    20→    20→  Instagram,
+    21→    21→  TrendingUp,
+    22→    22→  Smile,
+    23→    23→  Frown,
+    24→    24→  Meh,
+    25→    25→  ShieldCheck,
+    26→    26→  Zap,
+    27→    27→  Download,
+    28→    28→  BarChart3,
+    29→    29→  Sparkles,
+    30→    30→  ArrowRight,
+    31→    31→  Users,
+    32→    32→  Lock,
+    33→    33→  Quote,
+    34→    34→  Star,
+    35→    35→  Activity,
+    36→    36→  Cpu,
+    37→    37→  Globe,
+    38→    38→  Database,
+    39→    39→  Palette,
+    40→    40→  HelpCircle,
+    41→    41→} from "lucide-react";
+    42→    42→import { motion } from "framer-motion";
+    43→    43→
+    44→    44→export function LandingPage() {
+    45→    45→  const setView = useAppStore((s) => s.setView);
+    46→    46→
+    47→    47→  return (
+    48→    48→    <div className="flex min-h-screen flex-col bg-background">
+    49→    49→      {/* Navbar */}
+    50→    50→      <header className="sticky top-0 z-50 border-b border-border/60 glass">
+    51→    51→        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+    52→    52→          <div className="flex items-center gap-2">
+    53→    53→            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20">
+    54→    54→              <Brain className="h-5 w-5" />
+    55→    55→            </div>
+    56→    56→            <div>
+    57→    57→              <span className="text-lg font-bold tracking-tight">
+    58→    58→                Sentiment<span className="text-primary">Sense</span>
+    59→    59→              </span>
+    60→    60→            </div>
+    61→    61→          </div>
+    62→    62→          <div className="flex items-center gap-2">
+    63→    63→            <Button
+    64→    64→              variant="ghost"
+    65→    65→              size="sm"
+    66→    66→              onClick={() => setView("login")}
+    67→    67→              className="hidden sm:inline-flex"
+    68→    68→            >
+    69→    69→              Sign In
+    70→    70→            </Button>
+    71→    71→            <Button
+    72→    72→              size="sm"
+    73→    73→              onClick={() => setView("register")}
+    74→    74→              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90"
+    75→    75→            >
+    76→    76→              Get Started
+    77→    77→              <ArrowRight className="ml-1.5 h-4 w-4" />
+    78→    78→            </Button>
+    79→    79→          </div>
+    80→    80→        </div>
+    81→    81→      </header>
+    82→    82→
+    83→    83→      <main className="flex-1">
+    84→    84→        {/* Hero */}
+    85→    85→        <section className="relative overflow-hidden grid-bg">
+    86→    86→          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+    87→    87→          <div className="absolute -top-24 left-1/2 h-72 w-[40rem] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
+    88→    88→          <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+    89→    89→            <motion.div
+    90→    90→              initial={{ opacity: 0, y: 20 }}
+    91→    91→              animate={{ opacity: 1, y: 0 }}
+    92→    92→              transition={{ duration: 0.5 }}
+    93→    93→              className="mx-auto max-w-3xl text-center"
+    94→    94→            >
+    95→    95→              <Badge className="mb-6 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+    96→    96→                <Sparkles className="h-3 w-3" />
+    97→    97→                Powered by Fine-Tuned Transformer Models
+    98→    98→              </Badge>
+    99→    99→              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+   100→   100→                Understand What People{" "}
+   101→   101→                <span className="gradient-text">Really Feel</span>
+   102→   102→              </h1>
+   103→   103→              <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
+   104→   104→                Advanced AI-powered sentiment and emotion analysis across
+   105→   105→                YouTube, Reddit, X, and Instagram. Turn social media noise into
+   106→   106→                actionable insights with transformer-based NLP.
+   107→   107→              </p>
+   108→   108→              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+   109→   109→                <Button
+   110→   110→                  size="lg"
+   111→   111→                  onClick={() => setView("register")}
+   112→   112→                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90 sm:w-auto"
+   113→   113→                >
+   114→   114→                  Start Analyzing Free
+   115→   115→                  <ArrowRight className="ml-2 h-4 w-4" />
+   116→   116→                </Button>
+   117→   117→                <Button
+   118→   118→                  size="lg"
+   119→   119→                  variant="outline"
+   120→   120→                  onClick={() => setView("login")}
+   121→   121→                  className="w-full sm:w-auto"
+   122→   122→                >
+   123→   123→                  Sign In
+   124→   124→                </Button>
+   125→   125→              </div>
+   126→   126→              <p className="mt-4 text-xs text-muted-foreground">
+   127→   127→                No credit card required • Free tier includes all platforms
+   128→   128→              </p>
+   129→   129→            </motion.div>
+   130→   130→
+   131→   131→            {/* Platform pills */}
+   132→   132→            <motion.div
+   133→   133→              initial={{ opacity: 0, y: 20 }}
+   134→   134→              animate={{ opacity: 1, y: 0 }}
+   135→   135→              transition={{ duration: 0.5, delay: 0.2 }}
+   136→   136→              className="mt-14 flex flex-wrap items-center justify-center gap-3"
+   137→   137→            >
+   138→   138→              {Object.values(PLATFORMS).map((p) => {
+   139→   139→                const Icon = p.icon;
+   140→   140→                return (
+   141→   141→                  <div
+   142→   142→                    key={p.id}
+   143→   143→                    className={`flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium shadow-sm ${p.bgClass}`}
+   144→   144→                  >
+   145→   145→                    <Icon className="h-4 w-4" />
+   146→   146→                    {p.label}
+   147→   147→                  </div>
+   148→   148→                );
+   149→   149→              })}
+   150→   150→            </motion.div>
+   151→   151→          </div>
+   152→   152→        </section>
+   153→   153→
+   154→   154→        {/* Live Demo Preview */}
+   155→   155→        <DemoPreviewSection />
+   156→   156→
+   157→   157→        {/* Stats strip */}
+   158→   158→        <section className="border-y border-border bg-card/50">
+   159→   159→          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 py-8 sm:px-6 lg:grid-cols-4 lg:px-8">
+   160→   160→            {[
+   161→   161→              { icon: Activity, label: "Platforms", value: "4+" },
+   162→   162→              { icon: Brain, label: "AI Model", value: "Transformer" },
+   163→   163→              { icon: Smile, label: "Emotions", value: "8 Types" },
+   164→   164→              { icon: Zap, label: "Real-time", value: "Live Stream" },
+   165→   165→            ].map((s) => (
+   166→   166→              <div key={s.label} className="text-center">
+   167→   167→                <s.icon className="mx-auto mb-2 h-5 w-5 text-primary" />
+   168→   168→                <div className="text-2xl font-bold">{s.value}</div>
+   169→   169→                <div className="text-xs text-muted-foreground">{s.label}</div>
+   170→   170→              </div>
+   171→   171→            ))}
+   172→   172→          </div>
+   173→   173→        </section>
+   174→   174→
+   175→   175→        {/* Features */}
+   176→   176→        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+   177→   177→          <div className="mx-auto max-w-2xl text-center">
+   178→   178→            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+   179→   179→              Everything you need to decode public sentiment
+   180→   180→            </h2>
+   181→   181→            <p className="mt-4 text-muted-foreground">
+   182→   182→              From a single YouTube comment to a live stream of thousands of
+   183→   183→              messages — SentimentSense gives you the full picture.
+   184→   184→            </p>
+   185→   185→          </div>
+   186→   186→
+   187→   187→          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+   188→   188→            {FEATURES.map((f, i) => (
+   189→   189→              <motion.div
+   190→   190→                key={f.title}
+   191→   191→                initial={{ opacity: 0, y: 20 }}
+   192→   192→                whileInView={{ opacity: 1, y: 0 }}
+   193→   193→                viewport={{ once: true }}
+   194→   194→                transition={{ duration: 0.4, delay: i * 0.05 }}
+   195→   195→              >
+   196→   196→                <Card className="h-full border-border/60 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+   197→   197→                  <CardContent className="p-6">
+   198→   198→                    <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+   199→   199→                      <f.icon className="h-5 w-5" />
+   200→   200→                    </div>
+   201→   201→                    <h3 className="mb-2 font-semibold">{f.title}</h3>
+   202→   202→                    <p className="text-sm text-muted-foreground">{f.desc}</p>
+   203→   203→                  </CardContent>
+   204→   204→                </Card>
+   205→   205→              </motion.div>
+   206→   206→            ))}
+   207→   207→          </div>
+   208→   208→        </section>
+   209→   209→
+   210→   210→        {/* How it works */}
+   211→   211→        <section className="border-y border-border bg-card/50">
+   212→   212→          <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+   213→   213→            <div className="mx-auto max-w-2xl text-center">
+   214→   214→              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+   215→   215→                How it works
+   216→   216→              </h2>
+   217→   217→              <p className="mt-4 text-muted-foreground">
+   218→   218→                Three simple steps from raw social content to actionable
+   219→   219→                insight.
+   220→   220→              </p>
+   221→   221→            </div>
+   222→   222→            <div className="mt-12 grid gap-8 md:grid-cols-3">
+   223→   223→              {STEPS.map((step, i) => (
+   224→   224→                <div key={step.title} className="relative text-center">
+   225→   225→                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-xl font-bold text-white shadow-lg shadow-emerald-500/20">
+   226→   226→                    {i + 1}
+   227→   227→                  </div>
+   228→   228→                  <h3 className="mb-2 font-semibold">{step.title}</h3>
+   229→   229→                  <p className="text-sm text-muted-foreground">{step.desc}</p>
+   230→   230→                </div>
+   231→   231→              ))}
+   232→   232→            </div>
+   233→   233→          </div>
+   234→   234→        </section>
+   235→   235→
+   236→   236→        {/* Technology Stack */}
+   237→   237→        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+   238→   238→          <motion.div
+   239→   239→            initial={{ opacity: 0, y: 20 }}
+   240→   240→            whileInView={{ opacity: 1, y: 0 }}
+   241→   241→            viewport={{ once: true }}
+   242→   242→            transition={{ duration: 0.5 }}
+   243→   243→            className="mx-auto max-w-2xl text-center"
+   244→   244→          >
+   245→   245→            <Badge className="mb-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+   246→   246→              <Cpu className="h-3 w-3" />
+   247→   247→              Tech Stack
+   248→   248→            </Badge>
+   249→   249→            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+   250→   250→              Built with Modern Technology
+   251→   251→            </h2>
+   252→   252→            <p className="mt-4 text-muted-foreground">
+   253→   253→              SentimentSense leverages cutting-edge tools for reliable, scalable sentiment analysis.
+   254→   254→            </p>
+   255→   255→          </motion.div>
+   256→   256→          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+   257→   257→            {TECH_STACK.map((tech, i) => (
+   258→   258→              <motion.div
+   259→   259→                key={tech.name}
+   260→   260→                initial={{ opacity: 0, y: 20 }}
+   261→   261→                whileInView={{ opacity: 1, y: 0 }}
+   262→   262→                viewport={{ once: true }}
+   263→   263→                transition={{ duration: 0.4, delay: i * 0.05 }}
+   264→   264→              >
+   265→   265→                <Card className="group h-full border-border/60 bg-gradient-to-br from-card to-muted/20 transition-all duration-200 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5">
+   266→   266→                  <CardContent className="p-6">
+   267→   267→                    <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/15 to-teal-500/10 text-primary ring-1 ring-primary/10">
+   268→   268→                      <tech.icon className="h-5 w-5" />
+   269→   269→                    </div>
+   270→   270→                    <h3 className="mb-2 font-semibold">{tech.name}</h3>
+   271→   271→                    <p className="text-sm text-muted-foreground">{tech.desc}</p>
+   272→   272→                  </CardContent>
+   273→   273→                </Card>
+   274→   274→              </motion.div>
+   275→   275→            ))}
+   276→   276→          </div>
+   277→   277→        </section>
+   278→   278→
+   279→   279→        {/* Testimonials */}
+   280→   280→        <TestimonialsSection />
+   281→   281→
+   282→   282→        {/* Pricing / Tiers */}
+   283→   283→        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+   284→   284→          <div className="mx-auto max-w-2xl text-center">
+   285→   285→            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+   286→   286→              Simple, transparent tiers
+   287→   287→            </h2>
+   288→   288→            <p className="mt-4 text-muted-foreground">
+   289→   289→              Start free. Upgrade to premium for live stream analysis — approved
+   290→   290→              by our admin team.
+   291→   291→            </p>
+   292→   292→          </div>
+   293→   293→          <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2">
+   294→   294→            <Card className="relative border-border/60">
+   295→   295→              <CardContent className="p-6">
+   296→   296→                <div className="mb-4 flex items-center justify-between">
+   297→   297→                  <h3 className="text-lg font-semibold">Free</h3>
+   298→   298→                  <Badge variant="secondary">Default</Badge>
+   299→   299→                </div>
+   300→   300→                <div className="mb-4">
+   301→   301→                  <span className="text-4xl font-bold">₹0</span>
+   302→   302→                  <span className="text-muted-foreground">/forever</span>
+   303→   303→                </div>
+   304→   304→                <ul className="space-y-2 text-sm">
+   305→   305→                  {[
+   306→   306→                    "Analyze videos, posts, reels & discussions",
+   307→   307→                    "YouTube, Reddit, X, Instagram",
+   308→   308→                    "Sentiment + 8 emotion types",
+   309→   309→                    "Downloadable PDF reports",
+   310→   310→                    "Up to 40 items per analysis",
+   311→   311→                  ].map((f) => (
+   312→   312→                    <li key={f} className="flex items-start gap-2">
+   313→   313→                      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+   314→   314→                      <span>{f}</span>
+   315→   315→                    </li>
+   316→   316→                  ))}
+   317→   317→                </ul>
+   318→   318→                <Button
+   319→   319→                  className="mt-6 w-full"
+   320→   320→                  variant="outline"
+   321→   321→                  onClick={() => setView("register")}
+   322→   322→                >
+   323→   323→                  Get Started
+   324→   324→                </Button>
+   325→   325→              </CardContent>
+   326→   326→            </Card>
+   327→   327→
+   328→   328→            <Card className="relative border-primary/40 shadow-lg shadow-primary/10">
+   329→   329→              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+   330→   330→                <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+   331→   331→                  <Star className="h-3 w-3" />
+   332→   332→                  PREMIUM
+   333→   333→                </Badge>
+   334→   334→              </div>
+   335→   335→              <CardContent className="p-6">
+   336→   336→                <div className="mb-4 flex items-center justify-between">
+   337→   337→                  <h3 className="text-lg font-semibold">Premium</h3>
+   338→   338→                  <Badge variant="secondary">Admin-approved</Badge>
+   339→   339→                </div>
+   340→   340→                <div className="mb-4">
+   341→   341→                  <span className="text-4xl font-bold">Premium</span>
+   342→   342→                  <span className="text-muted-foreground">/access</span>
+   343→   343→                </div>
+   344→   344→                <ul className="space-y-2 text-sm">
+   345→   345→                  {[
+   346→   346→                    "Everything in Free",
+   347→   347→                    "Live stream real-time analysis",
+   348→   348→                    "Segment-by-segment sentiment tracking",
+   349→   349→                    "Live emotion trend charts",
+   350→   350→                    "Priority processing",
+   351→   351→                    "Unlimited analysis history",
+   352→   352→                  ].map((f) => (
+   353→   353→                    <li key={f} className="flex items-start gap-2">
+   354→   354→                      <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+   355→   355→                      <span>{f}</span>
+   356→   356→                    </li>
+   357→   357→                  ))}
+   358→   358→                </ul>
+   359→   359→                <Button
+   360→   360→                  className="mt-6 w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90"
+   361→   361→                  onClick={() => setView("register")}
+   362→   362→                >
+   363→   363→                  Apply for Premium
+   364→   364→                </Button>
+   365→   365→              </CardContent>
+   366→   366→            </Card>
+   367→   367→          </div>
+   368→   368→        </section>
+   369→   369→
+   370→   370→        {/* FAQ */}
+   371→   371→        <section className="border-y border-border bg-card/50">
+   372→   372→          <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6 lg:px-8">
+   373→   373→            <motion.div
+   374→   374→              initial={{ opacity: 0, y: 20 }}
+   375→   375→              whileInView={{ opacity: 1, y: 0 }}
+   376→   376→              viewport={{ once: true }}
+   377→   377→              transition={{ duration: 0.5 }}
+   378→   378→              className="mx-auto text-center"
+   379→   379→            >
+   380→   380→              <Badge className="mb-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+   381→   381→                <HelpCircle className="h-3 w-3" />
+   382→   382→                FAQ
+   383→   383→              </Badge>
+   384→   384→              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+   385→   385→                Frequently Asked Questions
+   386→   386→              </h2>
+   387→   387→              <p className="mt-4 text-muted-foreground">
+   388→   388→                Everything you need to know about SentimentSense
+   389→   389→              </p>
+   390→   390→            </motion.div>
+   391→   391→            <motion.div
+   392→   392→              initial={{ opacity: 0, y: 10 }}
+   393→   393→              whileInView={{ opacity: 1, y: 0 }}
+   394→   394→              viewport={{ once: true }}
+   395→   395→              transition={{ duration: 0.4, delay: 0.1 }}
+   396→   396→              className="mt-10"
+   397→   397→            >
+   398→   398→              <Accordion type="single" collapsible className="w-full">
+   399→   399→                {FAQ_ITEMS.map((faq, i) => (
+   400→   400→                  <AccordionItem key={i} value={`faq-${i}`}>
+   401→   401→                    <AccordionTrigger className="text-left text-sm font-semibold hover:no-underline">
+   402→   402→                      {faq.q}
+   403→   403→                    </AccordionTrigger>
+   404→   404→                    <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+   405→   405→                      {faq.a}
+   406→   406→                    </AccordionContent>
+   407→   407→                  </AccordionItem>
+   408→   408→                ))}
+   409→   409→              </Accordion>
+   410→   410→            </motion.div>
+   411→   411→          </div>
+   412→   412→        </section>
+   413→   413→
+   414→   414→        {/* Team / Group */}
+   415→   415→        <section className="border-t border-border bg-gradient-to-b from-card/50 to-background">
+   416→   416→          <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+   417→   417→            <div className="rounded-3xl border border-border bg-card p-8 text-center shadow-sm sm:p-12">
+   418→   418→              <Badge className="mb-4 bg-primary/10 text-primary">
+   419→   419→                Final Year Project
+   420→   420→              </Badge>
+   421→   421→              <h2 className="text-3xl font-bold tracking-tight">
+   422→   422→                Developed by{" "}
+   423→   423→                <span className="gradient-text">Group No {GROUP_INFO.groupNumber}</span>
+   424→   424→              </h2>
+   425→   425→              <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+   426→   426→                A comprehensive sentiment and emotion analysis dashboard built
+   427→   427→                as a final year college project, combining full-stack web
+   428→   428→                development with machine learning.
+   429→   429→              </p>
+   430→   430→              <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+   431→   431→                {GROUP_INFO.members.map((member) => (
+   432→   432→                  <div
+   433→   433→                    key={member}
+   434→   434→                    className="rounded-xl border border-border bg-background/50 p-4"
+   435→   435→                  >
+   436→   436→                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+   437→   437→                      <Users className="h-5 w-5" />
+   438→   438→                    </div>
+   439→   439→                    <p className="text-sm font-medium">{member}</p>
+   440→   440→                  </div>
+   441→   441→                ))}
+   442→   442→              </div>
+   443→   443→            </div>
+   444→   444→          </div>
+   445→   445→        </section>
+   446→   446→
+   447→   447→        {/* CTA */}
+   448→   448→        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+   449→   449→          <div className="rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 p-8 text-center text-white shadow-xl sm:p-12">
+   450→   450→            <h2 className="text-3xl font-bold tracking-tight">
+   451→   451→              Ready to decode public sentiment?
+   452→   452→            </h2>
+   453→   453→            <p className="mx-auto mt-3 max-w-xl text-emerald-50">
+   454→   454→              Join SentimentSense and start analyzing social media content with
+   455→   455→              transformer-powered AI.
+   456→   456→            </p>
+   457→   457→            <Button
+   458→   458→              size="lg"
+   459→   459→              variant="secondary"
+   460→   460→              className="mt-6"
+   461→   461→              onClick={() => setView("register")}
+   462→   462→            >
+   463→   463→              Create Your Free Account
+   464→   464→              <ArrowRight className="ml-2 h-4 w-4" />
+   465→   465→            </Button>
+   466→   466→          </div>
+   467→   467→        </section>
+   468→   468→      </main>
+   469→   469→
+   470→   470→      <Footer />
+   471→   471→    </div>
+   472→   472→  );
+   473→   473→}
+   474→   474→
+   475→   475→const FEATURES = [
+   476→   476→  {
+   477→   477→    icon: Brain,
+   478→   478→    title: "Transformer-Powered NLP",
+   479→   479→    desc: "Fine-tuned transformer model classifies sentiment and 8 distinct emotions with high accuracy.",
+   480→   480→  },
+   481→   481→  {
+   482→   482→    icon: BarChart3,
+   483→   483→    title: "Rich Visualizations",
+   484→   484→    desc: "Interactive pie charts, emotion bars, sentiment gauges, and keyword clouds for instant insight.",
+   485→   485→  },
+   486→   486→  {
+   487→   487→    icon: Youtube,
+   488→   488→    title: "Multi-Platform Support",
+   489→   489→    desc: "Analyze YouTube videos & streams, Reddit discussions, X posts, and Instagram reels & posts.",
+   490→   490→  },
+   491→   491→  {
+   492→   492→    icon: Zap,
+   493→   493→    title: "Live Stream Analysis",
+   494→   494→    desc: "Premium feature tracks sentiment in real-time during live streams, segment by segment.",
+   495→   495→  },
+   496→   496→  {
+   497→   497→    icon: Download,
+   498→   498→    title: "PDF Reports",
+   499→   499→    desc: "Download detailed analysis reports with metrics, insights, keywords, and sample items.",
+   500→   500→  },
+   501→   501→  {
+   502→   502→    icon: ShieldCheck,
+   503→   503→    title: "Private & Secure",
+   504→   504→    desc: "Each user has a separate dashboard. Your analyses are visible only to you and admins.",
+   505→   505→  },
+   506→   506→];
+   507→   507→
+   508→   508→const TECH_STACK = [
+   509→   509→  {
+   510→   510→    icon: Globe,
+   511→   511→    name: "Next.js 16",
+   512→   512→    desc: "Server-side rendering & App Router for lightning-fast pages",
+   513→   513→  },
+   514→   514→  {
+   515→   515→    icon: Database,
+   516→   516→    name: "Prisma ORM",
+   517→   517→    desc: "Type-safe database access with SQLite storage",
+   518→   518→  },
+   519→   519→  {
+   520→   520→    icon: Brain,
+   521→   521→    name: "Transformer NLP",
+   522→   522→    desc: "Fine-tuned language model for accurate sentiment classification",
+   523→   523→  },
+   524→   524→  {
+   525→   525→    icon: BarChart3,
+   526→   526→    name: "Recharts",
+   527→   527→    desc: "Interactive data visualizations and chart components",
+   528→   528→  },
+   529→   529→  {
+   530→   530→    icon: ShieldCheck,
+   531→   531→    name: "NextAuth.js",
+   532→   532→    desc: "Secure authentication with JWT session management",
+   533→   533→  },
+   534→   534→  {
+   535→   535→    icon: Palette,
+   536→   536→    name: "Tailwind CSS",
+   537→   537→    desc: "Utility-first styling with custom design system",
+   538→   538→  },
+   539→   539→];
+   540→   540→
+   541→   541→const FAQ_ITEMS = [
+   542→   542→  {
+   543→   543→    q: "What platforms does SentimentSense support?",
+   544→   544→    a: "SentimentSense supports YouTube (videos & live streams), Reddit (discussions & threads), X/Twitter (posts & replies), and Instagram (reels & posts). We're constantly evaluating new platforms.",
+   545→   545→  },
+   546→   546→  {
+   547→   547→    q: "How accurate is the sentiment analysis?",
+   548→   548→    a: "Our fine-tuned transformer model classifies sentiment into positive, negative, neutral, and mixed categories, along with 8 distinct emotions. The model has been specifically trained on social media content for higher accuracy in informal language contexts.",
+   549→   549→  },
+   550→   550→  {
+   551→   551→    q: "What's included in the free tier?",
+   552→   552→    a: "The free tier includes full sentiment and emotion analysis across all four platforms, PDF report downloads, CSV exports, comparison tools, and up to 40 items per analysis. No credit card required.",
+   553→   553→  },
+   554→   554→  {
+   555→   555→    q: "How do I get premium access?",
+   556→   556→    a: "Submit a premium application from your dashboard. Our admin team reviews each request, typically within 24 hours. Premium unlocks live stream real-time analysis and advanced analytics features.",
+   557→   557→  },
+   558→   558→  {
+   559→   559→    q: "Is my data private?",
+   560→   560→    a: "Yes. Each user has a separate dashboard, and your analyses are visible only to you and administrators. We don't share your data with third parties.",
+   561→   561→  },
+   562→   562→];
+   563→   563→
+   564→   564→const STEPS = [
+   565→   565→  {
+   566→   566→    title: "Paste or Select Content",
+   567→   567→    desc: "Choose a platform, paste comments or pick from sample datasets — no API keys needed.",
+   568→   568→  },
+   569→   569→  {
+   570→   570→    title: "AI Analyzes Sentiment",
+   571→   571→    desc: "Our transformer model classifies each item's sentiment, emotion, and intensity score.",
+   572→   572→  },
+   573→   573→  {
+   574→   574→    title: "Visualize & Download",
+   575→   575→    desc: "Explore interactive charts, read insights, and export a polished PDF report.",
+   576→   576→  },
+   577→   577→];
+   578→   578→
+   579→   579→const TESTIMONIALS = [
+   580→   580→  {
+   581→   581→    quote:
+   582→   582→      "We used SentimentSense to track real-time reactions across YouTube and X during a flagship product launch. It flagged a wave of negative comments about a missing feature within the first hour, so we caught and addressed the PR issue before it snowballed. Genuinely a game-changer for our brand monitoring workflow.",
+   583→   583→    name: "Priya Sharma",
+   584→   584→    role: "Digital Marketing Lead, TechVista Solutions",
+   585→   585→    gradient: "from-emerald-500 to-teal-600",
+   586→   586→    initials: "PS",
+   587→   587→  },
+   588→   588→  {
+   589→   589→    quote:
+   590→   590→      "The emotion breakdown completely changed how I plan content. I A/B test variations of our videos and posts, and SentimentSense makes it obvious — joy and surprise consistently drive the most engagement on ViralFeeds. I now write every script with those two emotions front of mind.",
+   591→   591→    name: "Rohan Mehta",
+   592→   592→    role: "Content Strategist, ViralFeeds",
+   593→   593→    gradient: "from-cyan-500 to-emerald-600",
+   594→   594→    initials: "RM",
+   595→   595→  },
+   596→   596→  {
+   597→   597→    quote:
+   598→   598→      "I'm using SentimentSense for my doctoral research on public sentiment during elections. The transformer-based classification is rigorous enough to cite, and the downloadable PDF reports make it easy to include in my methodology chapter. It saved me weeks of manual annotation work.",
+   599→   599→    name: "Dr. Anjali Kulkarni",
+   600→   600→    role: "Researcher, Symbiosis Institute",
+   601→   601→    gradient: "from-violet-500 to-rose-500",
+   602→   602→    initials: "AK",
+   603→   603→  },
+   604→   604→];
+   605→   605→
+   606→   606→function TestimonialsSection() {
+   607→   607→  return (
+   608→   608→    <section className="relative mx-auto max-w-7xl overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
+   609→   609→      {/* Soft emerald glow background */}
+   610→   610→      <div className="pointer-events-none absolute -top-32 left-1/2 h-80 w-[42rem] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
+   611→   611→
+   612→   612→      <motion.div
+   613→   613→        initial={{ opacity: 0, y: 20 }}
+   614→   614→        whileInView={{ opacity: 1, y: 0 }}
+   615→   615→        viewport={{ once: true }}
+   616→   616→        transition={{ duration: 0.5 }}
+   617→   617→        className="relative mx-auto max-w-2xl text-center"
+   618→   618→      >
+   619→   619→        <Badge className="mb-4 gap-1.5 border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+   620→   620→          <Star className="h-3 w-3 fill-current" />
+   621→   621→          Loved by users
+   622→   622→        </Badge>
+   623→   623→        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+   624→   624→          What our users are saying
+   625→   625→        </h2>
+   626→   626→        <p className="mt-4 text-muted-foreground">
+   627→   627→          Marketers, researchers, and content creators rely on SentimentSense
+   628→   628→          to decode public emotion across social media every day.
+   629→   629→        </p>
+   630→   630→      </motion.div>
+   631→   631→
+   632→   632→      <div className="relative mt-12 grid gap-6 md:grid-cols-3">
+   633→   633→        {TESTIMONIALS.map((t, i) => (
+   634→   634→          <motion.div
+   635→   635→            key={t.name}
+   636→   636→            initial={{ opacity: 0, y: 20 }}
+   637→   637→            whileInView={{ opacity: 1, y: 0 }}
+   638→   638→            viewport={{ once: true }}
+   639→   639→            transition={{ duration: 0.4, delay: i * 0.08 }}
+   640→   640→          >
+   641→   641→            <Card className="relative h-full overflow-hidden border-border/60 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+   642→   642→              <CardContent className="p-6">
+   643→   643→                <Quote className="pointer-events-none absolute right-4 top-4 h-12 w-12 text-primary/10" />
+   644→   644→                <div className="mb-3 flex gap-0.5">
+   645→   645→                  {Array.from({ length: 5 }).map((_, s) => (
+   646→   646→                    <Star
+   647→   647→                      key={s}
+   648→   648→                      className="h-4 w-4 fill-amber-500 text-amber-500"
+   649→   649→                    />
+   650→   650→                  ))}
+   651→   651→                </div>
+   652→   652→                <p className="relative text-sm leading-relaxed text-foreground/90">
+   653→   653→                  “{t.quote}”
+   654→   654→                </p>
+   655→   655→                <div className="mt-6 flex items-center gap-3 border-t border-border/60 pt-4">
+   656→   656→                  <div
+   657→   657→                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${t.gradient} text-sm font-semibold text-white shadow-md`}
+   658→   658→                  >
+   659→   659→                    {t.initials}
+   660→   660→                  </div>
+   661→   661→                  <div>
+   662→   662→                    <p className="text-sm font-semibold">{t.name}</p>
+   663→   663→                    <p className="text-xs text-muted-foreground">{t.role}</p>
+   664→   664→                  </div>
+   665→   665→                </div>
+   666→   666→              </CardContent>
+   667→   667→            </Card>
+   668→   668→          </motion.div>
+   669→   669→        ))}
+   670→   670→      </div>
+   671→   671→    </section>
+   672→   672→  );
+   673→   673→}
+   674→   674→
+   675→   675→function DemoPreviewSection() {
+   676→   676→  return (
+   677→   677→    <section className="relative overflow-hidden bg-gradient-to-b from-background to-muted/30 py-20">
+   678→   678→      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   679→   679→        <motion.div
+   680→   680→          initial={{ opacity: 0, y: 20 }}
+   681→   681→          whileInView={{ opacity: 1, y: 0 }}
+   682→   682→          viewport={{ once: true }}
+   683→   683→          transition={{ duration: 0.5 }}
+   684→   684→          className="mx-auto max-w-2xl text-center"
+   685→   685→        >
+   686→   686→          <Badge className="mb-4 gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+   687→   687→            <Sparkles className="h-3 w-3" />
+   688→   688→            Live Preview
+   689→   689→          </Badge>
+   690→   690→          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+   691→   691→            See SentimentSense in action
+   692→   692→          </h2>
+   693→   693→          <p className="mt-4 text-muted-foreground">
+   694→   694→            A glimpse of what your analysis dashboard looks like — rich charts,
+   695→   695→            emotion breakdowns, and AI-generated insights.
+   696→   696→          </p>
+   697→   697→        </motion.div>
+   698→   698→
+   699→   699→        {/* Dashboard mockup */}
+   700→   700→        <motion.div
+   701→   701→          initial={{ opacity: 0, y: 30 }}
+   702→   702→          whileInView={{ opacity: 1, y: 0 }}
+   703→   703→          viewport={{ once: true }}
+   704→   704→          transition={{ duration: 0.6, delay: 0.1 }}
+   705→   705→          className="relative mx-auto mt-12 max-w-5xl"
+   706→   706→        >
+   707→   707→          {/* Glow */}
+   708→   708→          <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 blur-2xl" />
+   709→   709→
+   710→   710→          <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-emerald-500/10">
+   711→   711→            {/* Browser chrome */}
+   712→   712→            <div className="flex items-center gap-2 border-b border-border bg-muted/50 px-4 py-3">
+   713→   713→              <div className="flex gap-1.5">
+   714→   714→                <div className="h-3 w-3 rounded-full bg-red-400" />
+   715→   715→                <div className="h-3 w-3 rounded-full bg-amber-400" />
+   716→   716→                <div className="h-3 w-3 rounded-full bg-emerald-400" />
+   717→   717→              </div>
+   718→   718→              <div className="ml-3 flex-1 truncate rounded-md bg-background px-3 py-1 text-xs text-muted-foreground">
+   719→   719→                sentimentsense.app/dashboard
+   720→   720→              </div>
+   721→   721→            </div>
+   722→   722→
+   723→   723→            {/* Dashboard content */}
+   724→   724→            <div className="grid gap-4 p-5 sm:grid-cols-3 sm:p-6">
+   725→   725→              {/* Metric cards */}
+   726→   726→              <DemoMetric
+   727→   727→                label="Overall Sentiment"
+   728→   728→                value="Positive"
+   729→   729→                color="text-emerald-600 dark:text-emerald-400"
+   730→   730→                icon={<TrendingUp className="h-4 w-4" />}
+   731→   731→              />
+   732→   732→              <DemoMetric
+   733→   733→                label="Sentiment Score"
+   734→   734→                value="+0.42"
+   735→   735→                color="text-emerald-600 dark:text-emerald-400"
+   736→   736→                icon={<Activity className="h-4 w-4" />}
+   737→   737→              />
+   738→   738→              <DemoMetric
+   739→   739→                label="Dominant Emotion"
+   740→   740→                value="Joy"
+   741→   741→                color="text-emerald-600 dark:text-emerald-400"
+   742→   742→                icon={<Smile className="h-4 w-4" />}
+   743→   743→              />
+   744→   744→
+   745→   745→              {/* Sentiment distribution bar */}
+   746→   746→              <div className="sm:col-span-2">
+   747→   747→                <div className="rounded-xl border border-border bg-background/50 p-4">
+   748→   748→                  <div className="mb-3 flex items-center justify-between">
+   749→   749→                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+   750→   750→                      Sentiment Distribution
+   751→   751→                    </span>
+   752→   752→                    <Badge variant="outline" className="text-[10px]">
+   753→   753→                      240 items
+   754→   754→                    </Badge>
+   755→   755→                  </div>
+   756→   756→                  <div className="flex h-3 overflow-hidden rounded-full bg-muted">
+   757→   757→                    <motion.div
+   758→   758→                      initial={{ width: 0 }}
+   759→   759→                      whileInView={{ width: "58%" }}
+   760→   760→                      viewport={{ once: true }}
+   761→   761→                      transition={{ duration: 1, delay: 0.3 }}
+   762→   762→                      className="bg-emerald-500"
+   763→   763→                    />
+   764→   764→                    <motion.div
+   765→   765→                      initial={{ width: 0 }}
+   766→   766→                      whileInView={{ width: "27%" }}
+   767→   767→                      viewport={{ once: true }}
+   768→   768→                      transition={{ duration: 1, delay: 0.5 }}
+   769→   769→                      className="bg-red-500"
+   770→   770→                    />
+   771→   771→                    <motion.div
+   772→   772→                      initial={{ width: 0 }}
+   773→   773→                      whileInView={{ width: "15%" }}
+   774→   774→                      viewport={{ once: true }}
+   775→   775→                      transition={{ duration: 1, delay: 0.7 }}
+   776→   776→                      className="bg-amber-500"
+   777→   777→                    />
+   778→   778→                  </div>
+   779→   779→                  <div className="mt-3 flex flex-wrap gap-4 text-xs">
+   780→   780→                    <span className="flex items-center gap-1.5">
+   781→   781→                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+   782→   782→                      Positive 58%
+   783→   783→                    </span>
+   784→   784→                    <span className="flex items-center gap-1.5">
+   785→   785→                      <span className="h-2 w-2 rounded-full bg-red-500" />
+   786→   786→                      Negative 27%
+   787→   787→                    </span>
+   788→   788→                    <span className="flex items-center gap-1.5">
+   789→   789→                      <span className="h-2 w-2 rounded-full bg-amber-500" />
+   790→   790→                      Neutral 15%
+   791→   791→                    </span>
+   792→   792→                  </div>
+   793→   793→                </div>
+   794→   794→              </div>
+   795→   795→
+   796→   796→              {/* Mini gauge */}
+   797→   797→              <div className="rounded-xl border border-border bg-background/50 p-4">
+   798→   798→                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+   799→   799→                  Score
+   800→   800→                </span>
+   801→   801→                <div className="relative mt-2 flex h-20 items-end justify-center">
+   802→   802→                  <svg width="120" height="60" viewBox="0 0 120 60">
+   803→   803→                    <path
+   804→   804→                      d="M 10 55 A 50 50 0 0 1 110 55"
+   805→   805→                      fill="none"
+   806→   806→                      stroke="var(--muted)"
+   807→   807→                      strokeWidth="10"
+   808→   808→                      strokeLinecap="round"
+   809→   809→                    />
+   810→   810→                    <motion.path
+   811→   811→                      d="M 10 55 A 50 50 0 0 1 110 55"
+   812→   812→                      fill="none"
+   813→   813→                      stroke="#10b981"
+   814→   814→                      strokeWidth="10"
+   815→   815→                      strokeLinecap="round"
+   816→   816→                      initial={{ pathLength: 0 }}
+   817→   817→                      whileInView={{ pathLength: 0.71 }}
+   818→   818→                      viewport={{ once: true }}
+   819→   819→                      transition={{ duration: 1.2, delay: 0.4 }}
+   820→   820→                    />
+   821→   821→                  </svg>
+   822→   822→                  <div className="absolute bottom-0 text-center">
+   823→   823→                    <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+   824→   824→                      +0.42
+   825→   825→                    </div>
+   826→   826→                  </div>
+   827→   827→                </div>
+   828→   828→              </div>
+   829→   829→
+   830→   830→              {/* Emotion bars */}
+   831→   831→              <div className="sm:col-span-3">
+   832→   832→                <div className="rounded-xl border border-border bg-background/50 p-4">
+   833→   833→                  <span className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+   834→   834→                    Emotion Breakdown
+   835→   835→                  </span>
+   836→   836→                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+   837→   837→                    {[
+   838→   838→                      { label: "Joy", pct: 70, color: "bg-emerald-500", emoji: "😄" },
+   839→   839→                      { label: "Surprise", pct: 45, color: "bg-violet-500", emoji: "😲" },
+   840→   840→                      { label: "Anger", pct: 27, color: "bg-red-500", emoji: "😠" },
+   841→   841→                      { label: "Anticipation", pct: 38, color: "bg-amber-500", emoji: "🤩" },
+   842→   842→                    ].map((e, i) => (
+   843→   843→                      <div key={e.label}>
+   844→   844→                        <div className="mb-1 flex items-center justify-between text-xs">
+   845→   845→                          <span className="flex items-center gap-1">
+   846→   846→                            <span>{e.emoji}</span>
+   847→   847→                            <span className="font-medium">{e.label}</span>
+   848→   848→                          </span>
+   849→   849→                          <span className="text-muted-foreground">{e.pct}%</span>
+   850→   850→                        </div>
+   851→   851→                        <div className="h-2 overflow-hidden rounded-full bg-muted">
+   852→   852→                          <motion.div
+   853→   853→                            initial={{ width: 0 }}
+   854→   854→                            whileInView={{ width: `${e.pct}%` }}
+   855→   855→                            viewport={{ once: true }}
+   856→   856→                            transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
+   857→   857→                            className={e.color}
+   858→   858→                          />
+   859→   859→                        </div>
+   860→   860→                      </div>
+   861→   861→                    ))}
+   862→   862→                  </div>
+   863→   863→                </div>
+   864→   864→              </div>
+   865→   865→
+   866→   866→              {/* AI insight */}
+   867→   867→              <div className="sm:col-span-3">
+   868→   868→                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+   869→   869→                  <div className="mb-2 flex items-center gap-2">
+   870→   870→                    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+   871→   871→                      <Brain className="h-3.5 w-3.5" />
+   872→   872→                    </div>
+   873→   873→                    <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+   874→   874→                      AI Insight
+   875→   875→                    </span>
+   876→   876→                  </div>
+   877→   877→                  <p className="text-sm text-foreground/90">
+   878→   878→                    Public reaction is predominantly positive, with users praising
+   879→   879→                    camera quality and performance. However, concerns about price
+   880→   880→                    and battery life suggest opportunities for improvement in
+   881→   881→                    messaging.
+   882→   882→                  </p>
+   883→   883→                </div>
+   884→   884→              </div>
+   885→   885→            </div>
+   886→   886→          </div>
+   887→   887→        </motion.div>
+   888→   888→      </div>
+   889→   889→    </section>
+   890→   890→  );
+   891→   891→}
+   892→   892→
+   893→   893→function DemoMetric({
+   894→   894→  label,
+   895→   895→  value,
+   896→   896→  color,
+   897→   897→  icon,
+   898→   898→}: {
+   899→   899→  label: string;
+   900→   900→  value: string;
+   901→   901→  color: string;
+   902→   902→  icon: React.ReactNode;
+   903→   903→}) {
+   904→   904→  return (
+   905→   905→    <div className="rounded-xl border border-border bg-background/50 p-4">
+   906→   906→      <div className="flex items-center justify-between">
+   907→   907→        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+   908→   908→          {label}
+   909→   909→        </span>
+   910→   910→        <span className={color}>{icon}</span>
+   911→   911→      </div>
+   912→   912→      <p className={`mt-2 text-xl font-bold ${color}`}>{value}</p>
+   913→   913→    </div>
+   914→   914→  );
+   915→   915→}
+   916→   916→

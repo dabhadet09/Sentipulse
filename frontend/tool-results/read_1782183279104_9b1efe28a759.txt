@@ -1,0 +1,760 @@
+     1→     1→"use client";
+     2→     2→
+     3→     3→import { useEffect, useState } from "react";
+     4→     4→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+     5→     5→import { Button } from "@/components/ui/button";
+     6→     6→import { Input } from "@/components/ui/input";
+     7→     7→import { Label } from "@/components/ui/label";
+     8→     8→import { Textarea } from "@/components/ui/textarea";
+     9→     9→import { Badge } from "@/components/ui/badge";
+    10→    10→import { Skeleton } from "@/components/ui/skeleton";
+    11→    11→import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+    12→    12→import { Separator } from "@/components/ui/separator";
+    13→    13→import { GROUP_INFO } from "@/lib/constants";
+    14→    14→import { toast } from "sonner";
+    15→    15→import { motion } from "framer-motion";
+    16→    16→import {
+    17→    17→  Mail,
+    18→    18→  Calendar,
+    19→    19→  Shield,
+    20→    20→  Crown,
+    21→    21→  User,
+    22→    22→  Save,
+    23→    23→  Loader2,
+    24→    24→  Edit3,
+    25→    25→  BarChart3,
+    26→    26→  FileText,
+    27→    27→  GraduationCap,
+    28→    28→  Sparkles,
+    29→    29→  Award,
+    30→    30→  Flame,
+    31→    31→  Rocket,
+    32→    32→  Target,
+    33→    33→  Trophy,
+    34→    34→  Zap,
+    35→    35→  Star,
+    36→    36→  CheckCircle2,
+    37→    37→  History,
+    38→    38→  LogIn,
+    39→    39→  Crown as CrownIcon,
+    40→    40→  Trash2,
+    41→    41→  Download,
+    42→    42→  Radio,
+    43→    43→  Send,
+    44→    44→  UserCog,
+    45→    45→  Clock,
+    46→    46→} from "lucide-react";
+    47→    47→
+    48→    48→interface UserProfile {
+    49→    49→  id: string;
+    50→    50→  name: string | null;
+    51→    51→  email: string;
+    52→    52→  role: string;
+    53→    53→  subscriptionTier: string;
+    54→    54→  bio: string | null;
+    55→    55→  avatar: string | null;
+    56→    56→  createdAt: string;
+    57→    57→}
+    58→    58→
+    59→    59→interface ActivityItem {
+    60→    60→  id: string;
+    61→    61→  type: "activity" | "premium";
+    62→    62→  icon: string;
+    63→    63→  title: string;
+    64→    64→  detail: string | null;
+    65→    65→  createdAt: string;
+    66→    66→  status?: string;
+    67→    67→}
+    68→    68→
+    69→    69→export function ProfileTab() {
+    70→    70→  const [profile, setProfile] = useState<UserProfile | null>(null);
+    71→    71→  const [analysisCount, setAnalysisCount] = useState(0);
+    72→    72→  const [applicationCount, setApplicationCount] = useState(0);
+    73→    73→  const [loading, setLoading] = useState(true);
+    74→    74→
+    75→    75→  const [editing, setEditing] = useState(false);
+    76→    76→  const [name, setName] = useState("");
+    77→    77→  const [bio, setBio] = useState("");
+    78→    78→  const [saving, setSaving] = useState(false);
+    79→    79→
+    80→    80→  const [activities, setActivities] = useState<ActivityItem[]>([]);
+    81→    81→  const [loadingActivities, setLoadingActivities] = useState(true);
+    82→    82→
+    83→    83→  useEffect(() => {
+    84→    84→    let cancelled = false;
+    85→    85→    (async () => {
+    86→    86→      try {
+    87→    87→        const [profileRes, notifRes] = await Promise.all([
+    88→    88→          fetch("/api/me"),
+    89→    89→          fetch("/api/notifications"),
+    90→    90→        ]);
+    91→    91→        if (cancelled) return;
+    92→    92→        if (profileRes.ok) {
+    93→    93→          const data = await profileRes.json();
+    94→    94→          setProfile(data.user);
+    95→    95→          setAnalysisCount(data.analysisCount || 0);
+    96→    96→          setApplicationCount(data.applicationCount || 0);
+    97→    97→          setName(data.user?.name || "");
+    98→    98→          setBio(data.user?.bio || "");
+    99→    99→        }
+   100→   100→        if (notifRes.ok) {
+   101→   101→          const notifData = await notifRes.json();
+   102→   102→          setActivities((notifData.notifications || []).slice(0, 8));
+   103→   103→        }
+   104→   104→      } catch {
+   105→   105→        // silent
+   106→   106→      } finally {
+   107→   107→        if (!cancelled) {
+   108→   108→          setLoading(false);
+   109→   109→          setLoadingActivities(false);
+   110→   110→        }
+   111→   111→      }
+   112→   112→    })();
+   113→   113→    return () => {
+   114→   114→      cancelled = true;
+   115→   115→    };
+   116→   116→  }, []);
+   117→   117→
+   118→   118→  async function handleSave() {
+   119→   119→    setSaving(true);
+   120→   120→    try {
+   121→   121→      const res = await fetch("/api/me", {
+   122→   122→        method: "PATCH",
+   123→   123→        headers: { "Content-Type": "application/json" },
+   124→   124→        body: JSON.stringify({ name, bio }),
+   125→   125→      });
+   126→   126→      const data = await res.json();
+   127→   127→      if (!res.ok) {
+   128→   128→        throw new Error(data.error || "Update failed");
+   129→   129→      }
+   130→   130→      setProfile((prev) =>
+   131→   131→        prev ? { ...prev, name: data.user.name, bio: data.user.bio } : prev
+   132→   132→      );
+   133→   133→      toast.success("Profile updated");
+   134→   134→      setEditing(false);
+   135→   135→    } catch (err) {
+   136→   136→      toast.error(err instanceof Error ? err.message : "Update failed");
+   137→   137→    } finally {
+   138→   138→      setSaving(false);
+   139→   139→    }
+   140→   140→  }
+   141→   141→
+   142→   142→  function handleCancel() {
+   143→   143→    setName(profile?.name || "");
+   144→   144→    setBio(profile?.bio || "");
+   145→   145→    setEditing(false);
+   146→   146→  }
+   147→   147→
+   148→   148→  if (loading || !profile) {
+   149→   149→    return (
+   150→   150→      <div className="space-y-6">
+   151→   151→        <Skeleton className="h-9 w-48" />
+   152→   152→        <div className="grid gap-6 lg:grid-cols-3">
+   153→   153→          <Card>
+   154→   154→            <CardContent className="p-6">
+   155→   155→              <div className="flex items-center gap-4">
+   156→   156→                <Skeleton className="h-16 w-16 rounded-full" />
+   157→   157→                <div className="space-y-2">
+   158→   158→                  <Skeleton className="h-5 w-32" />
+   159→   159→                  <Skeleton className="h-4 w-48" />
+   160→   160→                </div>
+   161→   161→              </div>
+   162→   162→              <Skeleton className="mt-4 h-20 w-full" />
+   163→   163→            </CardContent>
+   164→   164→          </Card>
+   165→   165→          <Card className="lg:col-span-2">
+   166→   166→            <CardContent className="p-6 space-y-3">
+   167→   167→              <Skeleton className="h-5 w-40" />
+   168→   168→              <Skeleton className="h-10 w-full" />
+   169→   169→              <Skeleton className="h-5 w-40" />
+   170→   170→              <Skeleton className="h-20 w-full" />
+   171→   171→            </CardContent>
+   172→   172→          </Card>
+   173→   173→        </div>
+   174→   174→      </div>
+   175→   175→    );
+   176→   176→  }
+   177→   177→
+   178→   178→  const isPremium = profile.subscriptionTier === "PREMIUM";
+   179→   179→  const isAdmin = profile.role === "ADMIN";
+   180→   180→  const initials = (profile.name || profile.email)
+   181→   181→    .split(" ")
+   182→   182→    .map((w) => w[0])
+   183→   183→    .slice(0, 2)
+   184→   184→    .join("")
+   185→   185→    .toUpperCase();
+   186→   186→
+   187→   187→  // ---- Achievements computation ----
+   188→   188→  // Account age in days
+   189→   189→  const accountAgeDays = Math.floor(
+   190→   190→    (Date.now() - new Date(profile.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+   191→   191→  );
+   192→   192→  type Achievement = {
+   193→   193→    id: string;
+   194→   194→    label: string;
+   195→   195→    description: string;
+   196→   196→    icon: typeof Award;
+   197→   197→    color: string;
+   198→   198→    earned: boolean;
+   199→   199→    progress?: { current: number; target: number };
+   200→   200→  };
+   201→   201→  const achievements: Achievement[] = [
+   202→   202→    {
+   203→   203→      id: "first-step",
+   204→   204→      label: "First Step",
+   205→   205→      description: "Created your SentimentSense account",
+   206→   206→      icon: Rocket,
+   207→   207→      color: "from-emerald-500 to-teal-600",
+   208→   208→      earned: true,
+   209→   209→    },
+   210→   210→    {
+   211→   211→      id: "first-analysis",
+   212→   212→      label: "First Analysis",
+   213→   213→      description: "Ran your first sentiment analysis",
+   214→   214→      icon: Sparkles,
+   215→   215→      color: "from-emerald-500 to-green-500",
+   216→   216→      earned: analysisCount >= 1,
+   217→   217→    },
+   218→   218→    {
+   219→   219→      id: "getting-started",
+   220→   220→      label: "Getting Started",
+   221→   221→      description: "Run 3 analyses",
+   222→   222→      icon: Target,
+   223→   223→      color: "from-cyan-500 to-emerald-500",
+   224→   224→      earned: analysisCount >= 3,
+   225→   225→      progress: { current: Math.min(analysisCount, 3), target: 3 },
+   226→   226→    },
+   227→   227→    {
+   228→   228→      id: "power-user",
+   229→   229→      label: "Power User",
+   230→   230→      description: "Run 10 analyses",
+   231→   231→      icon: Zap,
+   232→   232→      color: "from-amber-500 to-orange-500",
+   233→   233→      earned: analysisCount >= 10,
+   234→   234→      progress: { current: Math.min(analysisCount, 10), target: 10 },
+   235→   235→    },
+   236→   236→    {
+   237→   237→      id: "sentiment-pro",
+   238→   238→      label: "Sentiment Pro",
+   239→   239→      description: "Run 25 analyses",
+   240→   240→      icon: Trophy,
+   241→   241→      color: "from-violet-500 to-fuchsia-500",
+   242→   242→      earned: analysisCount >= 25,
+   243→   243→      progress: { current: Math.min(analysisCount, 25), target: 25 },
+   244→   244→    },
+   245→   245→    {
+   246→   246→      id: "premium-member",
+   247→   247→      label: "Premium Member",
+   248→   248→      description: "Unlocked premium features",
+   249→   249→      icon: Crown,
+   250→   250→      color: "from-amber-400 to-orange-500",
+   251→   251→      earned: isPremium,
+   252→   252→    },
+   253→   253→    {
+   254→   254→      id: "admin-recognized",
+   255→   255→      label: "Admin Recognized",
+   256→   256→      description: "Trusted with admin privileges",
+   257→   257→      icon: Shield,
+   258→   258→      color: "from-emerald-600 to-teal-700",
+   259→   259→      earned: isAdmin,
+   260→   260→    },
+   261→   261→    {
+   262→   262→      id: "loyal-member",
+   263→   263→      label: "Loyal Member",
+   264→   264→      description: "Active for 7+ days",
+   265→   265→      icon: Flame,
+   266→   266→      color: "from-rose-500 to-red-500",
+   267→   267→      earned: accountAgeDays >= 7,
+   268→   268→      progress: { current: Math.min(accountAgeDays, 7), target: 7 },
+   269→   269→    },
+   270→   270→  ];
+   271→   271→  const earnedCount = achievements.filter((a) => a.earned).length;
+   272→   272→  const totalAchievements = achievements.length;
+   273→   273→
+   274→   274→  return (
+   275→   275→    <div className="space-y-6">
+   276→   276→      {/* Header */}
+   277→   277→      <div>
+   278→   278→        <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+   279→   279→        <p className="mt-1 text-sm text-muted-foreground">
+   280→   280→          Manage your account info and view your activity stats.
+   281→   281→        </p>
+   282→   282→      </div>
+   283→   283→
+   284→   284→      <div className="grid gap-6 lg:grid-cols-3">
+   285→   285→        {/* Profile card */}
+   286→   286→        <Card className="lg:col-span-1">
+   287→   287→          <CardContent className="p-6">
+   288→   288→            <div className="flex flex-col items-center text-center">
+   289→   289→              <Avatar className="h-20 w-20 ring-4 ring-emerald-500/15">
+   290→   290→                <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-xl font-bold text-white">
+   291→   291→                  {initials}
+   292→   292→                </AvatarFallback>
+   293→   293→              </Avatar>
+   294→   294→              <h2 className="mt-3 text-lg font-bold">
+   295→   295→                {profile.name || "Unnamed User"}
+   296→   296→              </h2>
+   297→   297→              <p className="text-sm text-muted-foreground">{profile.email}</p>
+   298→   298→
+   299→   299→              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+   300→   300→                {isAdmin ? (
+   301→   301→                  <Badge className="gap-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+   302→   302→                    <Shield className="h-3 w-3" />
+   303→   303→                    Admin
+   304→   304→                  </Badge>
+   305→   305→                ) : (
+   306→   306→                  <Badge variant="outline" className="gap-1">
+   307→   307→                    <User className="h-3 w-3" />
+   308→   308→                    Member
+   309→   309→                  </Badge>
+   310→   310→                )}
+   311→   311→                {isPremium ? (
+   312→   312→                  <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+   313→   313→                    <Crown className="h-3 w-3" />
+   314→   314→                    Premium
+   315→   315→                  </Badge>
+   316→   316→                ) : (
+   317→   317→                  <Badge variant="outline" className="text-muted-foreground">
+   318→   318→                    Free Tier
+   319→   319→                  </Badge>
+   320→   320→                )}
+   321→   321→              </div>
+   322→   322→
+   323→   323→              <Separator className="my-5" />
+   324→   324→
+   325→   325→              <div className="w-full space-y-2.5 text-left">
+   326→   326→                <InfoRow
+   327→   327→                  icon={<Mail className="h-3.5 w-3.5" />}
+   328→   328→                  label="Email"
+   329→   329→                  value={profile.email}
+   330→   330→                />
+   331→   331→                <InfoRow
+   332→   332→                  icon={<Calendar className="h-3.5 w-3.5" />}
+   333→   333→                  label="Member since"
+   334→   334→                  value={new Date(profile.createdAt).toLocaleDateString(
+   335→   335→                    undefined,
+   336→   336→                    { year: "numeric", month: "long", day: "numeric" }
+   337→   337→                  )}
+   338→   338→                />
+   339→   339→                <InfoRow
+   340→   340→                  icon={<Shield className="h-3.5 w-3.5" />}
+   341→   341→                  label="Role"
+   342→   342→                  value={profile.role}
+   343→   343→                />
+   344→   344→              </div>
+   345→   345→            </div>
+   346→   346→          </CardContent>
+   347→   347→        </Card>
+   348→   348→
+   349→   349→        {/* Editable info + stats */}
+   350→   350→        <div className="space-y-6 lg:col-span-2">
+   351→   351→          {/* Stats */}
+   352→   352→          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+   353→   353→            <StatCard
+   354→   354→              icon={<BarChart3 className="h-4 w-4" />}
+   355→   355→              label="Analyses Run"
+   356→   356→              value={analysisCount}
+   357→   357→              color="from-emerald-500 to-teal-600"
+   358→   358→            />
+   359→   359→            <StatCard
+   360→   360→              icon={<FileText className="h-4 w-4" />}
+   361→   361→              label="Applications"
+   362→   362→              value={applicationCount}
+   363→   363→              color="from-amber-500 to-orange-500"
+   364→   364→            />
+   365→   365→            <StatCard
+   366→   366→              icon={<Sparkles className="h-4 w-4" />}
+   367→   367→              label="Plan"
+   368→   368→              value={isPremium ? "Premium" : "Free"}
+   369→   369→              color={isPremium ? "from-amber-500 to-orange-500" : "from-violet-500 to-fuchsia-500"}
+   370→   370→            />
+   371→   371→          </div>
+   372→   372→
+   373→   373→          {/* Achievements */}
+   374→   374→          <Card className="overflow-hidden">
+   375→   375→            <CardHeader className="pb-3">
+   376→   376→              <div className="flex items-center justify-between gap-3">
+   377→   377→                <div>
+   378→   378→                  <CardTitle className="flex items-center gap-2 text-base">
+   379→   379→                    <Award className="h-4 w-4 text-primary" />
+   380→   380→                    Achievements
+   381→   381→                  </CardTitle>
+   382→   382→                  <CardDescription className="text-xs">
+   383→   383→                    Earn badges as you use SentimentSense
+   384→   384→                  </CardDescription>
+   385→   385→                </div>
+   386→   386→                <Badge className="gap-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+   387→   387→                  <Trophy className="h-3 w-3" />
+   388→   388→                  {earnedCount} / {totalAchievements}
+   389→   389→                </Badge>
+   390→   390→              </div>
+   391→   391→              {/* Overall progress bar */}
+   392→   392→              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+   393→   393→                <motion.div
+   394→   394→                  initial={{ width: 0 }}
+   395→   395→                  animate={{
+   396→   396→                    width: `${(earnedCount / totalAchievements) * 100}%`,
+   397→   397→                  }}
+   398→   398→                  transition={{ duration: 0.7, ease: "easeOut" }}
+   399→   399→                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"
+   400→   400→                />
+   401→   401→              </div>
+   402→   402→            </CardHeader>
+   403→   403→            <CardContent>
+   404→   404→              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+   405→   405→                {achievements.map((a, i) => {
+   406→   406→                  const Icon = a.icon;
+   407→   407→                  return (
+   408→   408→                    <motion.div
+   409→   409→                      key={a.id}
+   410→   410→                      initial={{ opacity: 0, scale: 0.95 }}
+   411→   411→                      animate={{ opacity: 1, scale: 1 }}
+   412→   412→                      transition={{ duration: 0.3, delay: i * 0.04 }}
+   413→   413→                      className={`group relative flex flex-col items-center rounded-xl border p-3 text-center transition-all ${
+   414→   414→                        a.earned
+   415→   415→                          ? "border-border/70 bg-gradient-to-b from-card to-muted/30 shadow-sm hover:shadow-md"
+   416→   416→                          : "border-dashed border-border/60 bg-muted/20 opacity-70"
+   417→   417→                      }`}
+   418→   418→                    >
+   419→   419→                      {/* Earned check */}
+   420→   420→                      {a.earned && (
+   421→   421→                        <div className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
+   422→   422→                          <CheckCircle2 className="h-3 w-3" />
+   423→   423→                        </div>
+   424→   424→                      )}
+   425→   425→                      <div
+   426→   426→                        className={`flex h-12 w-12 items-center justify-center rounded-full ${
+   427→   427→                          a.earned
+   428→   428→                            ? `bg-gradient-to-br ${a.color} text-white shadow-md`
+   429→   429→                            : "bg-muted text-muted-foreground grayscale"
+   430→   430→                        } transition-transform group-hover:scale-105`}
+   431→   431→                      >
+   432→   432→                        <Icon className="h-6 w-6" />
+   433→   433→                      </div>
+   434→   434→                      <p
+   435→   435→                        className={`mt-2 text-xs font-semibold ${
+   436→   436→                          a.earned ? "text-foreground" : "text-muted-foreground"
+   437→   437→                        }`}
+   438→   438→                      >
+   439→   439→                        {a.label}
+   440→   440→                      </p>
+   441→   441→                      <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
+   442→   442→                        {a.description}
+   443→   443→                      </p>
+   444→   444→                      {a.progress && !a.earned && (
+   445→   445→                        <div className="mt-2 w-full">
+   446→   446→                          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+   447→   447→                            <div
+   448→   448→                              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+   449→   449→                              style={{
+   450→   450→                                width: `${
+   451→   451→                                  (a.progress.current / a.progress.target) * 100
+   452→   452→                                }%`,
+   453→   453→                              }}
+   454→   454→                            />
+   455→   455→                          </div>
+   456→   456→                          <p className="mt-0.5 text-[9px] text-muted-foreground">
+   457→   457→                            {a.progress.current}/{a.progress.target}
+   458→   458→                          </p>
+   459→   459→                        </div>
+   460→   460→                      )}
+   461→   461→                    </motion.div>
+   462→   462→                  );
+   463→   463→                })}
+   464→   464→              </div>
+   465→   465→            </CardContent>
+   466→   466→          </Card>
+   467→   467→
+   468→   468→          {/* Editable name + bio */}
+   469→   469→          <Card>
+   470→   470→            <CardHeader>
+   471→   471→              <CardTitle className="flex items-center justify-between text-base">
+   472→   472→                <span className="flex items-center gap-2">
+   473→   473→                  <Edit3 className="h-4 w-4 text-primary" />
+   474→   474→                  Account Details
+   475→   475→                </span>
+   476→   476→                {!editing && (
+   477→   477→                  <Button
+   478→   478→                    variant="outline"
+   479→   479→                    size="sm"
+   480→   480→                    onClick={() => setEditing(true)}
+   481→   481→                  >
+   482→   482→                    <Edit3 className="mr-1 h-3.5 w-3.5" />
+   483→   483→                    Edit
+   484→   484→                  </Button>
+   485→   485→                )}
+   486→   486→              </CardTitle>
+   487→   487→              <CardDescription>Update your display name and bio</CardDescription>
+   488→   488→            </CardHeader>
+   489→   489→            <CardContent className="space-y-4">
+   490→   490→              <div className="space-y-2">
+   491→   491→                <Label htmlFor="profile-name">Display Name</Label>
+   492→   492→                <Input
+   493→   493→                  id="profile-name"
+   494→   494→                  value={name}
+   495→   495→                  onChange={(e) => setName(e.target.value)}
+   496→   496→                  disabled={!editing || saving}
+   497→   497→                  placeholder="Your name"
+   498→   498→                />
+   499→   499→              </div>
+   500→   500→              <div className="space-y-2">
+   501→   501→                <Label htmlFor="profile-bio">Bio</Label>
+   502→   502→                <Textarea
+   503→   503→                  id="profile-bio"
+   504→   504→                  value={bio}
+   505→   505→                  onChange={(e) => setBio(e.target.value)}
+   506→   506→                  disabled={!editing || saving}
+   507→   507→                  placeholder="Tell us a bit about yourself…"
+   508→   508→                  className="min-h-[100px]"
+   509→   509→                />
+   510→   510→                <p className="text-xs text-muted-foreground">
+   511→   511→                  {bio.length} characters
+   512→   512→                </p>
+   513→   513→              </div>
+   514→   514→              {editing && (
+   515→   515→                <div className="flex justify-end gap-2">
+   516→   516→                  <Button variant="outline" onClick={handleCancel} disabled={saving}>
+   517→   517→                    Cancel
+   518→   518→                  </Button>
+   519→   519→                  <Button
+   520→   520→                    onClick={handleSave}
+   521→   521→                    disabled={saving}
+   522→   522→                    className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90"
+   523→   523→                  >
+   524→   524→                    {saving ? (
+   525→   525→                      <>
+   526→   526→                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+   527→   527→                        Saving…
+   528→   528→                      </>
+   529→   529→                    ) : (
+   530→   530→                      <>
+   531→   531→                        <Save className="mr-1.5 h-4 w-4" />
+   532→   532→                        Save Changes
+   533→   533→                      </>
+   534→   534→                    )}
+   535→   535→                  </Button>
+   536→   536→                </div>
+   537→   537→              )}
+   538→   538→            </CardContent>
+   539→   539→          </Card>
+   540→   540→
+   541→   541→          {/* Activity Timeline */}
+   542→   542→          <Card className="overflow-hidden">
+   543→   543→            <CardHeader className="pb-3">
+   544→   544→              <div className="flex items-center justify-between gap-3">
+   545→   545→                <div>
+   546→   546→                  <CardTitle className="flex items-center gap-2 text-base">
+   547→   547→                    <History className="h-4 w-4 text-primary" />
+   548→   548→                    Recent Activity
+   549→   549→                  </CardTitle>
+   550→   550→                  <CardDescription className="text-xs">
+   551→   551→                    Your last 8 actions on SentimentSense
+   552→   552→                  </CardDescription>
+   553→   553→                </div>
+   554→   554→                <Badge variant="outline" className="gap-1 text-[10px]">
+   555→   555→                  <Clock className="h-2.5 w-2.5" />
+   556→   556→                  Live
+   557→   557→                </Badge>
+   558→   558→              </div>
+   559→   559→            </CardHeader>
+   560→   560→            <CardContent>
+   561→   561→              {loadingActivities ? (
+   562→   562→                <div className="space-y-3">
+   563→   563→                  {Array.from({ length: 4 }).map((_, i) => (
+   564→   564→                    <div key={i} className="flex items-center gap-3">
+   565→   565→                      <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+   566→   566→                      <div className="flex-1 space-y-1.5">
+   567→   567→                        <Skeleton className="h-3 w-32" />
+   568→   568→                        <Skeleton className="h-2.5 w-20" />
+   569→   569→                      </div>
+   570→   570→                      <Skeleton className="h-3 w-12" />
+   571→   571→                    </div>
+   572→   572→                  ))}
+   573→   573→                </div>
+   574→   574→              ) : activities.length === 0 ? (
+   575→   575→                <div className="flex flex-col items-center justify-center py-8 text-center">
+   576→   576→                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+   577→   577→                    <History className="h-5 w-5 text-muted-foreground" />
+   578→   578→                  </div>
+   579→   579→                  <p className="mt-3 text-sm font-medium">No activity yet</p>
+   580→   580→                  <p className="mt-1 text-xs text-muted-foreground">
+   581→   581→                    Your recent actions will appear here.
+   582→   582→                  </p>
+   583→   583→                </div>
+   584→   584→              ) : (
+   585→   585→                <ol className="relative space-y-1">
+   586→   586→                  {/* Vertical line */}
+   587→   587→                  <span
+   588→   588→                    className="absolute left-[15px] top-3 bottom-3 w-px bg-gradient-to-b from-emerald-500/40 via-border to-transparent"
+   589→   589→                    aria-hidden
+   590→   590→                  />
+   591→   591→                  {activities.map((a, i) => {
+   592→   592→                    const meta = activityMeta(a.icon, a.type);
+   593→   593→                    const Icon = meta.icon;
+   594→   594→                    return (
+   595→   595→                      <motion.li
+   596→   596→                        key={a.id}
+   597→   597→                        initial={{ opacity: 0, x: -8 }}
+   598→   598→                        animate={{ opacity: 1, x: 0 }}
+   599→   599→                        transition={{ duration: 0.25, delay: Math.min(i * 0.05, 0.4) }}
+   600→   600→                        className="relative flex items-start gap-3 rounded-lg px-1.5 py-2 transition-colors hover:bg-muted/40"
+   601→   601→                      >
+   602→   602→                        <div
+   603→   603→                          className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${meta.color} text-white shadow-sm ring-2 ring-background`}
+   604→   604→                        >
+   605→   605→                          <Icon className="h-3.5 w-3.5" />
+   606→   606→                        </div>
+   607→   607→                        <div className="min-w-0 flex-1 pt-0.5">
+   608→   608→                          <p className="text-xs font-semibold leading-tight">
+   609→   609→                            {a.title}
+   610→   610→                          </p>
+   611→   611→                          {a.detail && (
+   612→   612→                            <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
+   613→   613→                              {a.detail}
+   614→   614→                            </p>
+   615→   615→                          )}
+   616→   616→                        </div>
+   617→   617→                        <time className="shrink-0 pt-0.5 text-[10px] tabular-nums text-muted-foreground">
+   618→   618→                          {timeAgo(a.createdAt)}
+   619→   619→                        </time>
+   620→   620→                      </motion.li>
+   621→   621→                    );
+   622→   622→                  })}
+   623→   623→                </ol>
+   624→   624→              )}
+   625→   625→            </CardContent>
+   626→   626→          </Card>
+   627→   627→
+   628→   628→          {/* Group credit */}
+   629→   629→          <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-teal-500/5">
+   630→   630→            <CardContent className="p-6">
+   631→   631→              <div className="flex items-start gap-3">
+   632→   632→                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+   633→   633→                  <GraduationCap className="h-6 w-6" />
+   634→   634→                </div>
+   635→   635→                <div>
+   636→   636→                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+   637→   637→                    Final Year Project
+   638→   638→                  </p>
+   639→   639→                  <h3 className="mt-0.5 text-base font-bold">
+   640→   640→                    Group No {GROUP_INFO.groupNumber}
+   641→   641→                  </h3>
+   642→   642→                  <p className="mt-1 text-sm text-muted-foreground">
+   643→   643→                    Computer Engineering
+   644→   644→                  </p>
+   645→   645→                  <div className="mt-3 flex flex-wrap gap-1.5">
+   646→   646→                    {GROUP_INFO.members.map((m) => (
+   647→   647→                      <Badge key={m} variant="outline" className="font-medium">
+   648→   648→                        {m}
+   649→   649→                      </Badge>
+   650→   650→                    ))}
+   651→   651→                  </div>
+   652→   652→                </div>
+   653→   653→              </div>
+   654→   654→            </CardContent>
+   655→   655→          </Card>
+   656→   656→        </div>
+   657→   657→      </div>
+   658→   658→    </div>
+   659→   659→  );
+   660→   660→}
+   661→   661→
+   662→   662→function InfoRow({
+   663→   663→  icon,
+   664→   664→  label,
+   665→   665→  value,
+   666→   666→}: {
+   667→   667→  icon: React.ReactNode;
+   668→   668→  label: string;
+   669→   669→  value: string;
+   670→   670→}) {
+   671→   671→  return (
+   672→   672→    <div className="flex items-center gap-2 text-sm">
+   673→   673→      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-muted text-muted-foreground">
+   674→   674→        {icon}
+   675→   675→      </span>
+   676→   676→      <span className="w-24 shrink-0 text-muted-foreground">{label}</span>
+   677→   677→      <span className="min-w-0 flex-1 truncate font-medium capitalize">{value}</span>
+   678→   678→    </div>
+   679→   679→  );
+   680→   680→}
+   681→   681→
+   682→   682→function StatCard({
+   683→   683→  icon,
+   684→   684→  label,
+   685→   685→  value,
+   686→   686→  color,
+   687→   687→}: {
+   688→   688→  icon: React.ReactNode;
+   689→   689→  label: string;
+   690→   690→  value: number | string;
+   691→   691→  color: string;
+   692→   692→}) {
+   693→   693→  return (
+   694→   694→    <Card>
+   695→   695→      <CardContent className="p-4">
+   696→   696→        <div className="flex items-center justify-between">
+   697→   697→          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+   698→   698→            {label}
+   699→   699→          </p>
+   700→   700→          <div
+   701→   701→            className={`flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br ${color} text-white`}
+   702→   702→          >
+   703→   703→            {icon}
+   704→   704→          </div>
+   705→   705→        </div>
+   706→   706→        <p className="mt-2 text-2xl font-bold capitalize tabular-nums">{value}</p>
+   707→   707→      </CardContent>
+   708→   708→    </Card>
+   709→   709→  );
+   710→   710→}
+   711→   711→
+   712→   712→/**
+   713→   713→ * Maps a notification icon/type string to a lucide icon + tailwind gradient.
+   714→   714→ */
+   715→   715→function activityMeta(
+   716→   716→  icon: string,
+   717→   717→  type: "activity" | "premium"
+   718→   718→): { icon: typeof History; color: string } {
+   719→   719→  if (type === "premium" || icon === "premium") {
+   720→   720→    return { icon: CrownIcon, color: "from-amber-500 to-orange-500" };
+   721→   721→  }
+   722→   722→  const map: Record<string, { icon: typeof History; color: string }> = {
+   723→   723→    login: { icon: LogIn, color: "from-emerald-500 to-teal-600" },
+   724→   724→    register: { icon: Rocket, color: "from-emerald-500 to-teal-600" },
+   725→   725→    analysis: { icon: BarChart3, color: "from-emerald-500 to-green-500" },
+   726→   726→    analysis_created: { icon: BarChart3, color: "from-emerald-500 to-green-500" },
+   727→   727→    apply_premium: { icon: Send, color: "from-amber-500 to-orange-500" },
+   728→   728→    premium_submitted: { icon: Send, color: "from-amber-500 to-orange-500" },
+   729→   729→    premium_approved: { icon: CrownIcon, color: "from-amber-400 to-orange-500" },
+   730→   730→    premium_rejected: { icon: CrownIcon, color: "from-rose-500 to-red-500" },
+   731→   731→    download_report: { icon: Download, color: "from-cyan-500 to-emerald-500" },
+   732→   732→    profile_updated: { icon: UserCog, color: "from-violet-500 to-fuchsia-500" },
+   733→   733→    delete_analysis: { icon: Trash2, color: "from-rose-500 to-red-500" },
+   734→   734→    livestream_segment: { icon: Radio, color: "from-amber-500 to-orange-500" },
+   735→   735→  };
+   736→   736→  return map[icon] || { icon: Sparkles, color: "from-emerald-500 to-teal-600" };
+   737→   737→}
+   738→   738→
+   739→   739→/**
+   740→   740→ * Human-friendly relative time, e.g. "5m ago", "2h ago", "3d ago".
+   741→   741→ */
+   742→   742→function timeAgo(iso: string): string {
+   743→   743→  const then = new Date(iso).getTime();
+   744→   744→  const now = Date.now();
+   745→   745→  const diff = Math.max(0, now - then);
+   746→   746→  const sec = Math.floor(diff / 1000);
+   747→   747→  if (sec < 60) return "just now";
+   748→   748→  const min = Math.floor(sec / 60);
+   749→   749→  if (min < 60) return `${min}m ago`;
+   750→   750→  const hr = Math.floor(min / 60);
+   751→   751→  if (hr < 24) return `${hr}h ago`;
+   752→   752→  const day = Math.floor(hr / 24);
+   753→   753→  if (day < 7) return `${day}d ago`;
+   754→   754→  const wk = Math.floor(day / 7);
+   755→   755→  if (wk < 4) return `${wk}w ago`;
+   756→   756→  const mo = Math.floor(day / 30);
+   757→   757→  if (mo < 12) return `${mo}mo ago`;
+   758→   758→  return `${Math.floor(day / 365)}y ago`;
+   759→   759→}
+   760→   760→

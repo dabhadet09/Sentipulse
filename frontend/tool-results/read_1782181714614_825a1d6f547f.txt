@@ -1,0 +1,1266 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useState } from "react";
+     4→import { useSession } from "next-auth/react";
+     5→import { useAppStore } from "@/store/app-store";
+     6→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+     7→import { Button } from "@/components/ui/button";
+     8→import { Input } from "@/components/ui/input";
+     9→import { Label } from "@/components/ui/label";
+    10→import { Textarea } from "@/components/ui/textarea";
+    11→import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+    12→import { Badge } from "@/components/ui/badge";
+    13→import { Skeleton } from "@/components/ui/skeleton";
+    14→import { Separator } from "@/components/ui/separator";
+    15→import { Switch } from "@/components/ui/switch";
+    16→import {
+    17→  SentimentBadge,
+    18→  EmotionBadge,
+    19→  PlatformBadge,
+    20→} from "@/components/shared/badges";
+    21→import {
+    22→  SentimentPieChart,
+    23→  EmotionBarChart,
+    24→  SentimentGauge,
+    25→} from "@/components/shared/charts";
+    26→import {
+    27→  PLATFORMS,
+    28→  CONTENT_TYPES,
+    29→  getPlatform,
+    30→  getEmotion,
+    31→  getSentiment,
+    32→} from "@/lib/constants";
+    33→import { generateAnalysisReport, exportAnalysisCSV } from "@/lib/report";
+    34→import type { AnalysisResult } from "@/lib/analysis";
+    35→import { toast } from "sonner";
+    36→import { motion, AnimatePresence } from "framer-motion";
+    37→import {
+    38→  Sparkles,
+    39→  Lock,
+    40→  ArrowRight,
+    41→  ArrowLeft,
+    42→  Plus,
+    43→  Trash2,
+    44→  FileText,
+    45→  Layers,
+    46→  Loader2,
+    47→  Download,
+    48→  CheckCircle2,
+    49→  ListChecks,
+    50→  Wand2,
+    51→  Brain,
+    52→  AlertCircle,
+    53→  Quote,
+    54→  FileSpreadsheet,
+    55→} from "lucide-react";
+    56→
+    57→type PlatformId = keyof typeof PLATFORMS;
+    58→
+    59→interface ManualItem {
+    60→  text: string;
+    61→  author?: string;
+    62→}
+    63→
+    64→interface SampleDataset {
+    65→  id: string;
+    66→  platform: string;
+    67→  contentType: string;
+    68→  title: string;
+    69→  description: string;
+    70→  items: { text: string; author: string }[];
+    71→}
+    72→
+    73→const PLATFORM_CONTENT: Record<PlatformId, string[]> = {
+    74→  youtube: ["video", "livestream"],
+    75→  reddit: ["discussion"],
+    76→  x: ["post"],
+    77→  instagram: ["reel", "post"],
+    78→};
+    79→
+    80→export function NewAnalysisTab() {
+    81→  const { data: session } = useSession();
+    82→  const setDashboardTab = useAppStore((s) => s.setDashboardTab);
+    83→  const setSelectedAnalysisId = useAppStore((s) => s.setSelectedAnalysisId);
+    84→
+    85→  const isPremium =
+    86→    session?.user?.subscriptionTier === "PREMIUM" ||
+    87→    session?.user?.role === "ADMIN";
+    88→
+    89→  const [step, setStep] = useState(1);
+    90→  const [platform, setPlatform] = useState<PlatformId>("youtube");
+    91→  const [contentType, setContentType] = useState<string>("video");
+    92→  const [title, setTitle] = useState("");
+    93→  const [sourceUrl, setSourceUrl] = useState("");
+    94→
+    95→  // Content state
+    96→  const [inputMode, setInputMode] = useState<"paste" | "sample">("paste");
+    97→  const [pastedText, setPastedText] = useState("");
+    98→  const [manualItems, setManualItems] = useState<ManualItem[]>([
+    99→    { text: "", author: "" },
+   100→  ]);
+   101→  const [sampleId, setSampleId] = useState<string | null>(null);
+   102→  const [batchMode, setBatchMode] = useState(false);
+   103→  const [batchText, setBatchText] = useState("");
+   104→
+   105→  // Samples
+   106→  const [samples, setSamples] = useState<SampleDataset[]>([]);
+   107→  const [samplesLoading, setSamplesLoading] = useState(true);
+   108→
+   109→  // Analysis
+   110→  const [analyzing, setAnalyzing] = useState(false);
+   111→  const [results, setResults] = useState<{
+   112→    analysisId: string;
+   113→    results: AnalysisResult;
+   114→  } | null>(null);
+   115→
+   116→  useEffect(() => {
+   117→    let cancelled = false;
+   118→    (async () => {
+   119→      try {
+   120→        const res = await fetch("/api/samples");
+   121→        const data = await res.json();
+   122→        if (!cancelled) setSamples(data.samples || []);
+   123→      } catch {
+   124→        // silent
+   125→      } finally {
+   126→        if (!cancelled) setSamplesLoading(false);
+   127→      }
+   128→    })();
+   129→    return () => {
+   130→      cancelled = true;
+   131→    };
+   132→  }, []);
+   133→
+   134→  // When platform changes, reset contentType to the first valid one
+   135→  useEffect(() => {
+   136→    const validTypes = PLATFORM_CONTENT[platform];
+   137→    if (!validTypes.includes(contentType)) {
+   138→      setContentType(validTypes[0]);
+   139→    }
+   140→  }, [platform, contentType]);
+   141→
+   142→  const platformSamples = samples.filter((s) => s.platform === platform);
+   143→
+   144→  // Parse pasted text into items
+   145→  const parsedItems: ManualItem[] = (() => {
+   146→    const text = pastedText.trim();
+   147→    if (!text) return [];
+   148→    // Try JSON first
+   149→    if (text.startsWith("[") || text.startsWith("{")) {
+   150→      try {
+   151→        const parsed = JSON.parse(text);
+   152→        const arr = Array.isArray(parsed) ? parsed : [parsed];
+   153→        return arr
+   154→          .map((it: { text?: string; author?: string; content?: string; body?: string; message?: string }) => ({
+   155→            text: it.text || it.content || it.body || it.message || "",
+   156→            author: it.author || it.user || it.username || undefined,
+   157→          }))
+   158→          .filter((it: ManualItem) => it.text.trim().length > 0);
+   159→      } catch {
+   160→        // fall through to line-based
+   161→      }
+   162→    }
+   163→    return text
+   164→      .split(/\n+/)
+   165→      .map((line) => line.trim())
+   166→      .filter((line) => line.length > 0)
+   167→      .map((line) => {
+   168→        // Support "author: text" or "@author text"
+   169→        const m = line.match(/^(?:@?[\w._-]+):\s*(.+)$/);
+   170→        if (m) {
+   171→          return {
+   172→            text: m[1].trim(),
+   173→            author: line.split(":")[0].trim().replace(/^@/, ""),
+   174→          };
+   175→        }
+   176→        return { text: line, author: undefined };
+   177→      });
+   178→  })();
+   179→
+   180→  const manualValidItems = manualItems.filter((it) => it.text.trim().length > 0);
+   181→
+   182→  // Batch mode parsed items
+   183→  const batchParsedItems: ManualItem[] = batchText
+   184→    .split("\n")
+   185→    .map((line) => line.trim())
+   186→    .filter((line) => line.length > 0)
+   187→    .map((line) => ({ text: line, author: undefined }));
+   188→
+   189→  const liveItemCount = inputMode === "sample"
+   190→    ? samples.find((s) => s.id === sampleId)?.items.length || 0
+   191→    : batchMode
+   192→      ? batchParsedItems.length
+   193→      : parsedItems.length + manualValidItems.length;
+   194→
+   195→  const isLivestream = contentType === "livestream";
+   196→  const livestreamLocked = isLivestream && !isPremium;
+   197→
+   198→  const canAnalyze =
+   199→    title.trim().length > 0 &&
+   200→    !livestreamLocked &&
+   201→    (inputMode === "sample"
+   202→      ? !!sampleId
+   203→      : liveItemCount >= 2);
+   204→
+   205→  async function handleAnalyze() {
+   206→    if (!canAnalyze) {
+   207→      toast.error("Please complete all steps before analyzing.");
+   208→      return;
+   209→    }
+   210→
+   211→    let payloadItems: ManualItem[] | undefined = undefined;
+   212→    if (inputMode === "sample") {
+   213→      // sampleId will be sent
+   214→    } else if (batchMode) {
+   215→      payloadItems = batchParsedItems;
+   216→      if (batchParsedItems.length < 2) {
+   217→        toast.error("Please provide at least 2 text items to analyze.");
+   218→        return;
+   219→      }
+   220→    } else {
+   221→      // Merge parsed + manual
+   222→      const merged = [...parsedItems, ...manualValidItems];
+   223→      payloadItems = merged;
+   224→      if (merged.length < 2) {
+   225→        toast.error("Please provide at least 2 text items to analyze.");
+   226→        return;
+   227→      }
+   228→    }
+   229→
+   230→    setAnalyzing(true);
+   231→    setResults(null);
+   232→    try {
+   233→      const res = await fetch("/api/analyze", {
+   234→        method: "POST",
+   235→        headers: { "Content-Type": "application/json" },
+   236→        body: JSON.stringify({
+   237→          platform,
+   238→          contentType,
+   239→          title: title.trim(),
+   240→          sourceUrl: sourceUrl.trim() || undefined,
+   241→          items: inputMode === "sample" ? undefined : payloadItems,
+   242→          sampleId: inputMode === "sample" ? sampleId : undefined,
+   243→        }),
+   244→      });
+   245→      const data = await res.json();
+   246→      if (!res.ok) {
+   247→        throw new Error(data.error || "Analysis failed");
+   248→      }
+   249→      setResults({ analysisId: data.analysisId, results: data.results });
+   250→      toast.success("Analysis complete! Generating insights…");
+   251→    } catch (err) {
+   252→      toast.error(err instanceof Error ? err.message : "Analysis failed");
+   253→    } finally {
+   254→      setAnalyzing(false);
+   255→    }
+   256→  }
+   257→
+   258→  function handleReset() {
+   259→    setResults(null);
+   260→    setStep(1);
+   261→    setTitle("");
+   262→    setSourceUrl("");
+   263→    setPastedText("");
+   264→    setManualItems([{ text: "", author: "" }]);
+   265→    setSampleId(null);
+   266→    setInputMode("paste");
+   267→    setPlatform("youtube");
+   268→    setContentType("video");
+   269→    setBatchMode(false);
+   270→    setBatchText("");
+   271→  }
+   272→
+   273→  function handleDownloadReport() {
+   274→    if (!results) return;
+   275→    const sample = samples.find((s) => s.id === sampleId);
+   276→    const items = inputMode === "sample"
+   277→      ? (sample?.items || [])
+   278→      : batchMode
+   279→        ? batchParsedItems
+   280→        : [...parsedItems, ...manualValidItems];
+   281→    generateAnalysisReport({
+   282→      id: results.analysisId,
+   283→      platform,
+   284→      contentType,
+   285→      title: title.trim(),
+   286→      sourceUrl: sourceUrl.trim() || null,
+   287→      overallSentiment: results.results.overallSentiment,
+   288→      sentimentScore: results.results.sentimentScore,
+   289→      itemCount: results.results.itemCount,
+   290→      isPremium: isLivestream,
+   291→      createdAt: new Date().toISOString(),
+   292→      results: {
+   293→        ...results.results,
+   294→        items: results.results.items.length
+   295→          ? results.results.items
+   296→          : items.map((it, i) => ({
+   297→              text: it.text,
+   298→              author: it.author,
+   299→              sentiment: results.results.items[i]?.sentiment || "neutral",
+   300→              emotion: results.results.items[i]?.emotion || "neutral",
+   301→              score: results.results.items[i]?.score || 0,
+   302→            })),
+   303→      },
+   304→    });
+   305→    toast.success("PDF report downloaded");
+   306→  }
+   307→
+   308→  function handleExportCSV() {
+   309→    if (!results) return;
+   310→    try {
+   311→      exportAnalysisCSV({
+   312→        id: results.analysisId,
+   313→        platform,
+   314→        contentType,
+   315→        title: title.trim(),
+   316→        createdAt: new Date().toISOString(),
+   317→        results: {
+   318→          ...results.results,
+   319→          items: results.results.items.length
+   320→            ? results.results.items
+   321→            : items.map((it, i) => ({
+   322→                text: it.text,
+   323→                author: it.author,
+   324→                sentiment: results.results.items[i]?.sentiment || "neutral",
+   325→                emotion: results.results.items[i]?.emotion || "neutral",
+   326→                score: results.results.items[i]?.score || 0,
+   327→              })),
+   328→        },
+   329→      });
+   330→      toast.success("CSV exported");
+   331→    } catch {
+   332→      toast.error("Failed to export CSV");
+   333→    }
+   334→  }
+   335→
+   336→  // ============ STEPS ============
+   337→  const steps = [
+   338→    { id: 1, label: "Platform" },
+   339→    { id: 2, label: "Content Type" },
+   340→    { id: 3, label: "Details" },
+   341→    { id: 4, label: "Content" },
+   342→  ];
+   343→
+   344→  return (
+   345→    <div className="space-y-6">
+   346→      {/* Header */}
+   347→      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+   348→        <div>
+   349→          <h1 className="text-2xl font-bold tracking-tight">New Analysis</h1>
+   350→          <p className="mt-1 text-sm text-muted-foreground">
+   351→            Configure your sentiment & emotion analysis in 4 quick steps.
+   352→          </p>
+   353→        </div>
+   354→        {results && (
+   355→          <Button variant="outline" size="sm" onClick={handleReset}>
+   356→            <Plus className="mr-1.5 h-4 w-4" />
+   357→            Start a New Analysis
+   358→          </Button>
+   359→        )}
+   360→      </div>
+   361→
+   362→      {/* Stepper */}
+   363→      {!results && !analyzing && (
+   364→        <Card>
+   365→          <CardContent className="p-4 sm:p-6">
+   366→            <div className="flex items-center justify-between">
+   367→              {steps.map((s, i) => {
+   368→                const done = step > s.id;
+   369→                const active = step === s.id;
+   370→                return (
+   371→                  <div key={s.id} className="flex flex-1 items-center last:flex-none">
+   372→                    <div className="flex items-center gap-3">
+   373→                      <div
+   374→                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-all ${
+   375→                          done
+   376→                            ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/30"
+   377→                            : active
+   378→                              ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
+   379→                              : "bg-muted text-muted-foreground"
+   380→                        }`}
+   381→                      >
+   382→                        {done ? <CheckCircle2 className="h-5 w-5" /> : s.id}
+   383→                      </div>
+   384→                      <div className="hidden sm:block">
+   385→                        <p
+   386→                          className={`text-xs font-medium uppercase tracking-wide ${
+   387→                            active ? "text-foreground" : "text-muted-foreground"
+   388→                          }`}
+   389→                        >
+   390→                          Step {s.id}
+   391→                        </p>
+   392→                        <p
+   393→                          className={`text-sm font-semibold ${
+   394→                            active ? "text-foreground" : "text-muted-foreground"
+   395→                          }`}
+   396→                        >
+   397→                          {s.label}
+   398→                        </p>
+   399→                      </div>
+   400→                    </div>
+   401→                    {i < steps.length - 1 && (
+   402→                      <div
+   403→                        className={`mx-3 h-0.5 flex-1 rounded-full transition-all ${
+   404→                          done ? "bg-emerald-500" : "bg-border"
+   405→                        }`}
+   406→                      />
+   407→                    )}
+   408→                  </div>
+   409→                );
+   410→              })}
+   411→            </div>
+   412→          </CardContent>
+   413→        </Card>
+   414→      )}
+   415→
+   416→      <AnimatePresence mode="wait">
+   417→        {analyzing ? (
+   418→          <AnalyzingState key="analyzing" platform={platform} />
+   419→        ) : results ? (
+   420→          <ResultsPanel
+   421→            key="results"
+   422→            analysisId={results.analysisId}
+   423→            results={results.results}
+   424→            title={title}
+   425→            platform={platform}
+   426→            contentType={contentType}
+   427→            isLivestream={isLivestream}
+   428→            onViewDetail={() => {
+   429→              setSelectedAnalysisId(results.analysisId);
+   430→            }}
+   431→            onDownload={handleDownloadReport}
+   432→            onExportCSV={handleExportCSV}
+   433→            onNewAnalysis={handleReset}
+   434→          />
+   435→        ) : (
+   436→          <motion.div
+   437→            key="form"
+   438→            initial={{ opacity: 0 }}
+   439→            animate={{ opacity: 1 }}
+   440→            exit={{ opacity: 0 }}
+   441→          >
+   442→            {/* STEP 1 — Platform */}
+   443→            {step === 1 && (
+   444→              <Card>
+   445→                <CardHeader>
+   446→                  <CardTitle className="flex items-center gap-2 text-lg">
+   447→                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+   448→                      1
+   449→                    </span>
+   450→                    Choose a platform
+   451→                  </CardTitle>
+   452→                  <CardDescription>
+   453→                    Select the social media platform whose content you want to analyze.
+   454→                  </CardDescription>
+   455→                </CardHeader>
+   456→                <CardContent>
+   457→                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   458→                    {(Object.keys(PLATFORMS) as PlatformId[]).map((id) => {
+   459→                      const p = PLATFORMS[id];
+   460→                      const Icon = p.icon;
+   461→                      const active = platform === id;
+   462→                      return (
+   463→                        <button
+   464→                          key={id}
+   465→                          onClick={() => setPlatform(id)}
+   466→                          className={`group relative cursor-pointer overflow-hidden rounded-xl border-2 p-5 text-left transition-all duration-200 ${
+   467→                            active
+   468→                              ? "border-primary bg-primary/5 shadow-md shadow-primary/10 -translate-y-0.5"
+   469→                              : "border-border hover:border-primary/40 hover:bg-accent/30 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5"
+   470→                          }`}
+   471→                        >
+   472→                          <div
+   473→                            className={`absolute -right-6 -top-6 h-20 w-20 rounded-full bg-gradient-to-br ${p.gradient} opacity-10 transition-transform group-hover:scale-125`}
+   474→                          />
+   475→                          <div
+   476→                            className={`relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${p.gradient} text-white shadow-lg`}
+   477→                          >
+   478→                            <Icon className="h-6 w-6" />
+   479→                          </div>
+   480→                          <p className="relative mt-3 font-semibold">{p.label}</p>
+   481→                          <p className="relative mt-0.5 text-xs text-muted-foreground">
+   482→                            {PLATFORM_CONTENT[id].length} content type
+   483→                            {PLATFORM_CONTENT[id].length > 1 ? "s" : ""}
+   484→                          </p>
+   485→                          {active && (
+   486→                            <div className="absolute right-3 top-3">
+   487→                              <CheckCircle2 className="h-5 w-5 text-primary" />
+   488→                            </div>
+   489→                          )}
+   490→                        </button>
+   491→                      );
+   492→                    })}
+   493→                  </div>
+   494→                </CardContent>
+   495→              </Card>
+   496→            )}
+   497→
+   498→            {/* STEP 2 — Content Type */}
+   499→            {step === 2 && (
+   500→              <Card>
+   501→                <CardHeader>
+   502→                  <CardTitle className="flex items-center gap-2 text-lg">
+   503→                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+   504→                      2
+   505→                    </span>
+   506→                    Pick a content type
+   507→                  </CardTitle>
+   508→                  <CardDescription>
+   509→                    What kind of {PLATFORMS[platform].label} content are you analyzing?
+   510→                  </CardDescription>
+   511→                </CardHeader>
+   512→                <CardContent>
+   513→                  <div className="grid gap-4 sm:grid-cols-2">
+   514→                    {PLATFORM_CONTENT[platform].map((ct) => {
+   515→                      const meta = CONTENT_TYPES[ct];
+   516→                      const active = contentType === ct;
+   517→                      const locked = meta.premium && !isPremium;
+   518→                      return (
+   519→                        <button
+   520→                          key={ct}
+   521→                          onClick={() => !locked && setContentType(ct)}
+   522→                          disabled={locked}
+   523→                          className={`group relative overflow-hidden rounded-xl border-2 p-5 text-left transition-all ${
+   524→                            locked
+   525→                              ? "cursor-not-allowed border-border bg-muted/40 opacity-70"
+   526→                              : active
+   527→                                ? "border-primary bg-primary/5 shadow-md"
+   528→                                : "border-border hover:border-primary/40 hover:bg-accent/30"
+   529→                          }`}
+   530→                        >
+   531→                          <div className="flex items-start justify-between">
+   532→                            <div>
+   533→                              <div className="flex items-center gap-2">
+   534→                                <p className="font-semibold">{meta.label}</p>
+   535→                                {meta.premium && (
+   536→                                  <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 px-1.5 py-0 text-[9px] text-white">
+   537→                                    PRO
+   538→                                  </Badge>
+   539→                                )}
+   540→                              </div>
+   541→                              <p className="mt-1 text-xs text-muted-foreground">
+   542→                                {meta.description}
+   543→                              </p>
+   544→                            </div>
+   545→                            {locked ? (
+   546→                              <Lock className="h-5 w-5 text-muted-foreground" />
+   547→                            ) : active ? (
+   548→                              <CheckCircle2 className="h-5 w-5 text-primary" />
+   549→                            ) : null}
+   550→                          </div>
+   551→                          {locked && (
+   552→                            <div className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+   553→                              <div className="flex items-start gap-2">
+   554→                                <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+   555→                                <div className="text-xs">
+   556→                                  <p className="font-medium text-amber-700 dark:text-amber-400">
+   557→                                    Premium feature
+   558→                                  </p>
+   559→                                  <p className="mt-0.5 text-muted-foreground">
+   560→                                    Live stream analysis is a premium feature.
+   561→                                  </p>
+   562→                                  <Button
+   563→                                    size="sm"
+   564→                                    variant="outline"
+   565→                                    className="mt-2 h-7 border-amber-500/40 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-400"
+   566→                                    onClick={(e) => {
+   567→                                      e.stopPropagation();
+   568→                                      setDashboardTab("premium");
+   569→                                    }}
+   570→                                  >
+   571→                                    <Sparkles className="mr-1 h-3 w-3" />
+   572→                                    Apply for Premium
+   573→                                  </Button>
+   574→                                </div>
+   575→                              </div>
+   576→                            </div>
+   577→                          )}
+   578→                        </button>
+   579→                      );
+   580→                    })}
+   581→                  </div>
+   582→                </CardContent>
+   583→              </Card>
+   584→            )}
+   585→
+   586→            {/* STEP 3 — Details */}
+   587→            {step === 3 && (
+   588→              <Card>
+   589→                <CardHeader>
+   590→                  <CardTitle className="flex items-center gap-2 text-lg">
+   591→                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+   592→                      3
+   593→                    </span>
+   594→                    Analysis details
+   595→                  </CardTitle>
+   596→                  <CardDescription>
+   597→                    Give your analysis a title so you can find it later.
+   598→                  </CardDescription>
+   599→                </CardHeader>
+   600→                <CardContent className="space-y-4">
+   601→                  <div className="space-y-2">
+   602→                    <Label htmlFor="title">
+   603→                      Title <span className="text-destructive">*</span>
+   604→                    </Label>
+   605→                    <Input
+   606→                      id="title"
+   607→                      placeholder="e.g. iPhone 16 launch — public reaction"
+   608→                      value={title}
+   609→                      onChange={(e) => setTitle(e.target.value)}
+   610→                    />
+   611→                  </div>
+   612→                  <div className="space-y-2">
+   613→                    <Label htmlFor="source">Source URL (optional)</Label>
+   614→                    <Input
+   615→                      id="source"
+   616→                      placeholder="https://youtube.com/watch?v=..."
+   617→                      value={sourceUrl}
+   618→                      onChange={(e) => setSourceUrl(e.target.value)}
+   619→                    />
+   620→                    <p className="text-xs text-muted-foreground">
+   621→                      Link back to the original post or video.
+   622→                    </p>
+   623→                  </div>
+   624→                  <div className="rounded-lg border border-border bg-muted/30 p-4">
+   625→                    <p className="text-xs font-medium text-muted-foreground">
+   626→                      Summary
+   627→                    </p>
+   628→                    <div className="mt-2 flex flex-wrap gap-2">
+   629→                      <PlatformBadge platform={platform} />
+   630→                      <Badge variant="outline" className="capitalize">
+   631→                        {CONTENT_TYPES[contentType].label}
+   632→                      </Badge>
+   633→                      {isLivestream && (
+   634→                        <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+   635→                          Premium
+   636→                        </Badge>
+   637→                      )}
+   638→                    </div>
+   639→                  </div>
+   640→                </CardContent>
+   641→              </Card>
+   642→            )}
+   643→
+   644→            {/* STEP 4 — Content */}
+   645→            {step === 4 && (
+   646→              <Card>
+   647→                <CardHeader>
+   648→                  <CardTitle className="flex items-center gap-2 text-lg">
+   649→                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+   650→                      4
+   651→                    </span>
+   652→                    Provide content to analyze
+   653→                  </CardTitle>
+   654→                  <CardDescription>
+   655→                    Paste text/comments or pick a ready-made sample dataset.
+   656→                  </CardDescription>
+   657→                </CardHeader>
+   658→                <CardContent>
+   659→                  <Tabs
+   660→                    value={inputMode}
+   661→                    onValueChange={(v) => setInputMode(v as "paste" | "sample")}
+   662→                  >
+   663→                    <TabsList className="grid w-full max-w-sm grid-cols-2">
+   664→                      <TabsTrigger value="paste">
+   665→                        <FileText className="mr-1.5 h-3.5 w-3.5" />
+   666→                        Paste Content
+   667→                      </TabsTrigger>
+   668→                      <TabsTrigger value="sample">
+   669→                        <Layers className="mr-1.5 h-3.5 w-3.5" />
+   670→                        Sample Dataset
+   671→                      </TabsTrigger>
+   672→                    </TabsList>
+   673→
+   674→                    {/* Paste tab */}
+   675→                    <TabsContent value="paste" className="space-y-4">
+   676→                      {/* Batch mode toggle */}
+   677→                      <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-3">
+   678→                        <div className="flex items-center gap-2">
+   679→                          <ListChecks className="h-4 w-4 text-muted-foreground" />
+   680→                          <Label htmlFor="batch-mode" className="cursor-pointer text-sm font-medium">
+   681→                            Batch mode
+   682→                          </Label>
+   683→                        </div>
+   684→                        <Switch
+   685→                          id="batch-mode"
+   686→                          checked={batchMode}
+   687→                          onCheckedChange={setBatchMode}
+   688→                        />
+   689→                      </div>
+   690→
+   691→                      {batchMode ? (
+   692→                        <div className="space-y-2">
+   693→                          <div className="flex items-center justify-between">
+   694→                            <Label htmlFor="batch-text">Paste multiple items, one per line</Label>
+   695→                            <span className="text-xs text-muted-foreground">
+   696→                              {batchParsedItems.length} items detected
+   697→                            </span>
+   698→                          </div>
+   699→                          <Textarea
+   700→                            id="batch-text"
+   701→                            placeholder="Paste multiple items, one per line…"
+   702→                            value={batchText}
+   703→                            onChange={(e) => setBatchText(e.target.value)}
+   704→                            className="min-h-[200px] font-mono text-xs"
+   705→                          />
+   706→                          <p className="text-xs text-muted-foreground">
+   707→                            Each line becomes a separate item with an &quot;Anonymous&quot; author.
+   708→                          </p>
+   709→                        </div>
+   710→                      ) : (
+   711→                      <>
+   712→                      <div className="space-y-2">
+   713→                        <div className="flex items-center justify-between">
+   714→                          <Label htmlFor="pasted">Paste comments / posts</Label>
+   715→                          <span className="text-xs text-muted-foreground">
+   716→                            {parsedItems.length} parsed items
+   717→                          </span>
+   718→                        </div>
+   719→                        <Textarea
+   720→                          id="pasted"
+   721→                          placeholder={`Paste one item per line. Supported formats:\n\nThis video is amazing!\nBest tutorial I've seen.\n@user1: Loved the editing.\n\nOr paste JSON: [{"text": "...", "author": "..."}]`}
+   722→                          value={pastedText}
+   723→                          onChange={(e) => setPastedText(e.target.value)}
+   724→                          className="min-h-[160px] font-mono text-xs"
+   725→                        />
+   726→                        <p className="text-xs text-muted-foreground">
+   727→                          Tip: lines like <code className="rounded bg-muted px-1">author: text</code> or{" "}
+   728→                          <code className="rounded bg-muted px-1">@author text</code> are parsed automatically.
+   729→                        </p>
+   730→                      </div>
+   731→
+   732→                      <Separator />
+   733→
+   734→                      <div className="space-y-3">
+   735→                        <div className="flex items-center justify-between">
+   736→                          <Label className="text-sm font-medium">
+   737→                            Or add items manually
+   738→                          </Label>
+   739→                          <Button
+   740→                            size="sm"
+   741→                            variant="outline"
+   742→                            onClick={() =>
+   743→                              setManualItems([...manualItems, { text: "", author: "" }])
+   744→                            }
+   745→                          >
+   746→                            <Plus className="mr-1 h-3.5 w-3.5" />
+   747→                            Add item
+   748→                          </Button>
+   749→                        </div>
+   750→                        <div className="space-y-2">
+   751→                          {manualItems.map((it, i) => (
+   752→                            <div
+   753→                              key={i}
+   754→                              className="flex items-start gap-2 rounded-lg border border-border bg-card p-2"
+   755→                            >
+   756→                              <Input
+   757→                                placeholder="@author (optional)"
+   758→                                value={it.author || ""}
+   759→                                onChange={(e) => {
+   760→                                  const next = [...manualItems];
+   761→                                  next[i] = { ...next[i], author: e.target.value };
+   762→                                  setManualItems(next);
+   763→                                }}
+   764→                                className="h-9 w-32 sm:w-40"
+   765→                              />
+   766→                              <Textarea
+   767→                                placeholder="Type or paste a comment / post text…"
+   768→                                value={it.text}
+   769→                                onChange={(e) => {
+   770→                                  const next = [...manualItems];
+   771→                                  next[i] = { ...next[i], text: e.target.value };
+   772→                                  setManualItems(next);
+   773→                                }}
+   774→                                className="min-h-[40px] flex-1 resize-none text-sm"
+   775→                              />
+   776→                              <Button
+   777→                                size="icon"
+   778→                                variant="ghost"
+   779→                                className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+   780→                                onClick={() => {
+   781→                                  setManualItems(manualItems.filter((_, idx) => idx !== i));
+   782→                                }}
+   783→                              >
+   784→                                <Trash2 className="h-4 w-4" />
+   785→                              </Button>
+   786→                            </div>
+   787→                          ))}
+   788→                          {manualItems.length === 0 && (
+   789→                            <p className="text-center text-xs text-muted-foreground">
+   790→                              No manual items. Click “Add item” to add some.
+   791→                            </p>
+   792→                          )}
+   793→                        </div>
+   794→                      </div>
+   795→                      </>
+   796→                      )}
+   797→                    </TabsContent>
+   798→
+   799→                    {/* Sample tab */}
+   800→                    <TabsContent value="sample" className="space-y-4">
+   801→                      {samplesLoading ? (
+   802→                        <div className="grid gap-4 sm:grid-cols-2">
+   803→                          {Array.from({ length: 2 }).map((_, i) => (
+   804→                            <Skeleton key={i} className="h-32 w-full" />
+   805→                          ))}
+   806→                        </div>
+   807→                      ) : platformSamples.length === 0 ? (
+   808→                        <div className="rounded-xl border border-dashed border-border p-8 text-center">
+   809→                          <Layers className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
+   810→                          <p className="text-sm font-medium">No samples for {PLATFORMS[platform].label}</p>
+   811→                          <p className="mt-1 text-xs text-muted-foreground">
+   812→                            Try a different platform or paste your own content.
+   813→                          </p>
+   814→                        </div>
+   815→                      ) : (
+   816→                        <div className="grid gap-4 sm:grid-cols-2">
+   817→                          {platformSamples.map((s) => {
+   818→                            const active = sampleId === s.id;
+   819→                            return (
+   820→                              <button
+   821→                                key={s.id}
+   822→                                onClick={() => setSampleId(s.id)}
+   823→                                className={`group relative overflow-hidden rounded-xl border-2 p-4 text-left transition-all ${
+   824→                                  active
+   825→                                    ? "border-primary bg-primary/5 shadow-md"
+   826→                                    : "border-border hover:border-primary/40 hover:bg-accent/30"
+   827→                                }`}
+   828→                              >
+   829→                                <div className="flex items-start justify-between gap-2">
+   830→                                  <div className="min-w-0 flex-1">
+   831→                                    <p className="truncate text-sm font-semibold">
+   832→                                      {s.title}
+   833→                                    </p>
+   834→                                    <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+   835→                                      {s.description}
+   836→                                    </p>
+   837→                                  </div>
+   838→                                  {active && (
+   839→                                    <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+   840→                                  )}
+   841→                                </div>
+   842→                                <div className="mt-3 flex items-center gap-2">
+   843→                                  <Badge variant="outline" className="capitalize">
+   844→                                    {CONTENT_TYPES[s.contentType]?.label || s.contentType}
+   845→                                  </Badge>
+   846→                                  <span className="text-[11px] text-muted-foreground">
+   847→                                    {s.items.length} items
+   848→                                  </span>
+   849→                                </div>
+   850→                              </button>
+   851→                            );
+   852→                          })}
+   853→                        </div>
+   854→                      )}
+   855→                    </TabsContent>
+   856→                  </Tabs>
+   857→
+   858→                  {/* Live count */}
+   859→                  <div className="mt-5 flex items-center justify-between rounded-lg border border-border bg-muted/40 p-4">
+   860→                    <div className="flex items-center gap-3">
+   861→                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+   862→                        <ListChecks className="h-5 w-5" />
+   863→                      </div>
+   864→                      <div>
+   865→                        <p className="text-xs font-medium text-muted-foreground">
+   866→                          Items ready to analyze
+   867→                        </p>
+   868→                        <p className="text-xl font-bold tabular-nums">{liveItemCount}</p>
+   869→                      </div>
+   870→                    </div>
+   871→                    {liveItemCount > 0 && liveItemCount < 2 && (
+   872→                      <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+   873→                        <AlertCircle className="h-3.5 w-3.5" />
+   874→                        At least 2 items required
+   875→                      </div>
+   876→                    )}
+   877→                  </div>
+   878→                </CardContent>
+   879→              </Card>
+   880→            )}
+   881→          </motion.div>
+   882→        )}
+   883→      </AnimatePresence>
+   884→
+   885→      {/* Navigation buttons */}
+   886→      {!results && !analyzing && (
+   887→        <div className="flex items-center justify-between">
+   888→          <Button
+   889→            variant="ghost"
+   890→            onClick={() => setStep(Math.max(1, step - 1))}
+   891→            disabled={step === 1}
+   892→          >
+   893→            <ArrowLeft className="mr-1.5 h-4 w-4" />
+   894→            Back
+   895→          </Button>
+   896→          {step < 4 ? (
+   897→            <Button
+   898→              onClick={() => setStep(Math.min(4, step + 1))}
+   899→              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90"
+   900→              disabled={step === 2 && livestreamLocked}
+   901→            >
+   902→              Continue
+   903→              <ArrowRight className="ml-1.5 h-4 w-4" />
+   904→            </Button>
+   905→          ) : (
+   906→            <Button
+   907→              onClick={handleAnalyze}
+   908→              disabled={!canAnalyze}
+   909→              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90"
+   910→            >
+   911→              <Wand2 className="mr-1.5 h-4 w-4" />
+   912→              Run Analysis
+   913→            </Button>
+   914→          )}
+   915→        </div>
+   916→      )}
+   917→    </div>
+   918→  );
+   919→}
+   920→
+   921→// ============ Sub-components ============
+   922→
+   923→function AnalyzingState({ platform }: { platform: string }) {
+   924→  const p = getPlatform(platform);
+   925→  const Icon = p.icon;
+   926→  const [phase, setPhase] = useState(0);
+   927→  const phases = [
+   928→    "Tokenizing input text…",
+   929→    "Running transformer forward pass…",
+   930→    "Classifying sentiment per item…",
+   931→    "Detecting emotions (joy, anger, fear…)…",
+   932→    "Extracting keywords & themes…",
+   933→    "Computing distribution statistics…",
+   934→    "Generating human-readable insights…",
+   935→  ];
+   936→
+   937→  useEffect(() => {
+   938→    const id = setInterval(() => {
+   939→      setPhase((prev) => Math.min(prev + 1, phases.length - 1));
+   940→    }, 2200);
+   941→    return () => clearInterval(id);
+   942→  }, []);
+   943→
+   944→  return (
+   945→    <motion.div
+   946→      initial={{ opacity: 0, scale: 0.97 }}
+   947→      animate={{ opacity: 1, scale: 1 }}
+   948→      className="overflow-hidden rounded-2xl border border-border bg-card"
+   949→    >
+   950→      <div className="relative grid-bg px-6 py-12 text-center sm:px-12 sm:py-16">
+   951→        <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
+   952→        <motion.div
+   953→          animate={{
+   954→            scale: [1, 1.05, 1],
+   955→            rotate: [0, 3, -3, 0],
+   956→          }}
+   957→          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+   958→          className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-2xl shadow-emerald-500/40"
+   959→        >
+   960→          <Brain className="h-10 w-10" />
+   961→          <motion.div
+   962→            animate={{ rotate: 360 }}
+   963→            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+   964→            className="absolute -inset-2 rounded-2xl border-2 border-dashed border-emerald-500/30"
+   965→          />
+   966→        </motion.div>
+   967→
+   968→        <h3 className="relative mt-6 text-xl font-bold">
+   969→          Analyzing your content…
+   970→        </h3>
+   971→        <p className="relative mt-2 text-sm text-muted-foreground">
+   972→          Our transformer model is processing each item from{" "}
+   973→          <span className="inline-flex items-center gap-1 font-medium text-foreground">
+   974→            <Icon className="h-3.5 w-3.5" />
+   975→            {p.label}
+   976→          </span>
+   977→          . This usually takes 10–20 seconds.
+   978→        </p>
+   979→
+   980→        <div className="relative mx-auto mt-8 max-w-md space-y-2.5">
+   981→          {phases.map((label, i) => {
+   982→            const done = i < phase;
+   983→            const active = i === phase;
+   984→            return (
+   985→              <motion.div
+   986→                key={label}
+   987→                initial={{ opacity: 0, x: -8 }}
+   988→                animate={{ opacity: i <= phase ? 1 : 0.4, x: 0 }}
+   989→                transition={{ delay: i * 0.05 }}
+   990→                className="flex items-center gap-3 rounded-lg border border-border bg-card/60 px-4 py-2.5 text-left"
+   991→              >
+   992→                {done ? (
+   993→                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+   994→                ) : active ? (
+   995→                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
+   996→                ) : (
+   997→                  <div className="h-4 w-4 shrink-0 rounded-full border-2 border-muted-foreground/30" />
+   998→                )}
+   999→                <span className={`text-sm ${done ? "text-muted-foreground line-through" : active ? "font-medium" : "text-muted-foreground"}`}>
+  1000→                  {label}
+  1001→                </span>
+  1002→              </motion.div>
+  1003→            );
+  1004→          })}
+  1005→        </div>
+  1006→      </div>
+  1007→    </motion.div>
+  1008→  );
+  1009→}
+  1010→
+  1011→function ResultsPanel({
+  1012→  analysisId,
+  1013→  results,
+  1014→  title,
+  1015→  platform,
+  1016→  contentType,
+  1017→  isLivestream,
+  1018→  onViewDetail,
+  1019→  onDownload,
+  1020→  onExportCSV,
+  1021→  onNewAnalysis,
+  1022→}: {
+  1023→  analysisId: string;
+  1024→  results: AnalysisResult;
+  1025→  title: string;
+  1026→  platform: string;
+  1027→  contentType: string;
+  1028→  isLivestream: boolean;
+  1029→  onViewDetail: () => void;
+  1030→  onDownload: () => void;
+  1031→  onExportCSV: () => void;
+  1032→  onNewAnalysis: () => void;
+  1033→}) {
+  1034→  const dominantEmotion = getEmotion(results.dominantEmotion);
+  1035→  return (
+  1036→    <motion.div
+  1037→      initial={{ opacity: 0, y: 12 }}
+  1038→      animate={{ opacity: 1, y: 0 }}
+  1039→      className="space-y-5"
+  1040→    >
+  1041→      {/* Success header */}
+  1042→      <Card className="overflow-hidden border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-teal-500/5">
+  1043→        <CardContent className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+  1044→          <div className="flex items-center gap-3">
+  1045→            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30">
+  1046→              <CheckCircle2 className="h-6 w-6" />
+  1047→            </div>
+  1048→            <div>
+  1049→              <p className="text-xs font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+  1050→                Analysis Complete
+  1051→              </p>
+  1052→              <h2 className="text-lg font-bold">{title}</h2>
+  1053→              <p className="text-xs text-muted-foreground">
+  1054→                {results.itemCount} items analyzed • ID: {analysisId.slice(0, 8)}
+  1055→              </p>
+  1056→            </div>
+  1057→          </div>
+  1058→          <div className="flex flex-wrap gap-2">
+  1059→            <Button variant="outline" size="sm" onClick={onDownload} title="Download PDF report">
+  1060→              <Download className="mr-1.5 h-4 w-4" />
+  1061→              <span className="hidden sm:inline">PDF </span>Report
+  1062→            </Button>
+  1063→            <Button variant="outline" size="sm" onClick={onExportCSV} title="Export analysis items as CSV">
+  1064→              <FileSpreadsheet className="mr-1.5 h-4 w-4" />
+  1065→              <span className="hidden sm:inline">Export </span>CSV
+  1066→            </Button>
+  1067→            <Button size="sm" onClick={onViewDetail} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90">
+  1068→              View Full Detail
+  1069→              <ArrowRight className="ml-1.5 h-4 w-4" />
+  1070→            </Button>
+  1071→          </div>
+  1072→        </CardContent>
+  1073→      </Card>
+  1074→
+  1075→      {/* Quick stats row */}
+  1076→      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+  1077→        <StatTile
+  1078→          label="Overall Sentiment"
+  1079→          value={results.overallSentiment}
+  1080→          badge={<SentimentBadge sentiment={results.overallSentiment} />}
+  1081→        />
+  1082→        <StatTile
+  1083→          label="Sentiment Score"
+  1084→          value={`${results.sentimentScore > 0 ? "+" : ""}${results.sentimentScore.toFixed(2)}`}
+  1085→          sub="range -1 to +1"
+  1086→        />
+  1087→        <StatTile
+  1088→          label="Dominant Emotion"
+  1089→          value={dominantEmotion.label}
+  1090→          sub={`${dominantEmotion.emoji} detected`}
+  1091→        />
+  1092→        <StatTile
+  1093→          label="Items Analyzed"
+  1094→          value={String(results.itemCount)}
+  1095→          sub={isLivestream ? "livestream segment" : "from input"}
+  1096→        />
+  1097→      </div>
+  1098→
+  1099→      {/* Charts row */}
+  1100→      <div className="grid gap-5 lg:grid-cols-3">
+  1101→        <Card>
+  1102→          <CardHeader>
+  1103→            <CardTitle className="text-base">Sentiment Distribution</CardTitle>
+  1104→            <CardDescription>Percentage split across items</CardDescription>
+  1105→          </CardHeader>
+  1106→          <CardContent>
+  1107→            <SentimentPieChart distribution={results.sentimentDistribution} />
+  1108→          </CardContent>
+  1109→        </Card>
+  1110→        <Card className="lg:col-span-2">
+  1111→          <CardHeader>
+  1112→            <CardTitle className="text-base">Emotion Breakdown</CardTitle>
+  1113→            <CardDescription>Count of items per detected emotion</CardDescription>
+  1114→          </CardHeader>
+  1115→          <CardContent>
+  1116→            <EmotionBarChart distribution={results.emotionDistribution} />
+  1117→          </CardContent>
+  1118→        </Card>
+  1119→      </div>
+  1120→
+  1121→      {/* Gauge + Summary */}
+  1122→      <div className="grid gap-5 lg:grid-cols-3">
+  1123→        <Card className="lg:col-span-1">
+  1124→          <CardHeader>
+  1125→            <CardTitle className="text-base">Sentiment Gauge</CardTitle>
+  1126→            <CardDescription>Overall positivity score</CardDescription>
+  1127→          </CardHeader>
+  1128→          <CardContent>
+  1129→            <SentimentGauge score={results.sentimentScore} />
+  1130→          </CardContent>
+  1131→        </Card>
+  1132→        <Card className="lg:col-span-2">
+  1133→          <CardHeader>
+  1134→            <CardTitle className="flex items-center gap-2 text-base">
+  1135→              <Sparkles className="h-4 w-4 text-primary" />
+  1136→              AI Summary
+  1137→            </CardTitle>
+  1138→            <CardDescription>Generated by the transformer model</CardDescription>
+  1139→          </CardHeader>
+  1140→          <CardContent>
+  1141→            <p className="rounded-lg border border-border bg-muted/30 p-4 text-sm leading-relaxed">
+  1142→              {results.summary}
+  1143→            </p>
+  1144→
+  1145→            <div className="mt-4">
+  1146→              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+  1147→                Key Insights
+  1148→              </p>
+  1149→              <ul className="mt-2 space-y-2">
+  1150→                {results.insights.map((insight, i) => (
+  1151→                  <li key={i} className="flex items-start gap-2 text-sm">
+  1152→                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+  1153→                    <span>{insight}</span>
+  1154→                  </li>
+  1155→                ))}
+  1156→              </ul>
+  1157→            </div>
+  1158→          </CardContent>
+  1159→        </Card>
+  1160→      </div>
+  1161→
+  1162→      {/* Top keywords */}
+  1163→      <Card>
+  1164→        <CardHeader>
+  1165→          <CardTitle className="flex items-center gap-2 text-base">
+  1166→            <Brain className="h-4 w-4 text-primary" />
+  1167→            Top Keywords
+  1168→          </CardTitle>
+  1169→          <CardDescription>Most frequent terms, colored by associated sentiment</CardDescription>
+  1170→        </CardHeader>
+  1171→        <CardContent>
+  1172→          <div className="flex flex-wrap gap-2">
+  1173→            {results.keywords.slice(0, 20).map((k) => {
+  1174→              const s = getSentiment(k.sentiment);
+  1175→              return (
+  1176→                <span
+  1177→                  key={k.word}
+  1178→                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${s.bgClass}`}
+  1179→                >
+  1180→                  <span>{k.word}</span>
+  1181→                  <span className="text-[10px] opacity-70">×{k.count}</span>
+  1182→                </span>
+  1183→              );
+  1184→            })}
+  1185→          </div>
+  1186→        </CardContent>
+  1187→      </Card>
+  1188→
+  1189→      {/* Sample item results */}
+  1190→      <Card>
+  1191→        <CardHeader>
+  1192→          <CardTitle className="flex items-center gap-2 text-base">
+  1193→            <Quote className="h-4 w-4 text-primary" />
+  1194→            Sample Analyzed Items
+  1195→          </CardTitle>
+  1196→          <CardDescription>First 6 items with per-item sentiment</CardDescription>
+  1197→        </CardHeader>
+  1198→        <CardContent>
+  1199→          <div className="max-h-80 space-y-2 overflow-y-auto scrollbar-thin pr-1">
+  1200→            {results.items.slice(0, 6).map((it, i) => (
+  1201→              <div
+  1202→                key={i}
+  1203→                className="rounded-lg border border-border bg-card/60 p-3"
+  1204→              >
+  1205→                <div className="flex items-start justify-between gap-2">
+  1206→                  <p className="text-sm">{it.text}</p>
+  1207→                  <div className="flex shrink-0 flex-col items-end gap-1">
+  1208→                    <SentimentBadge sentiment={it.sentiment} />
+  1209→                    <EmotionBadge emotion={it.emotion} />
+  1210→                  </div>
+  1211→                </div>
+  1212→                <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+  1213→                  {it.author && <span>@{it.author}</span>}
+  1214→                  <span>score: {it.score.toFixed(2)}</span>
+  1215→                </div>
+  1216→              </div>
+  1217→            ))}
+  1218→          </div>
+  1219→        </CardContent>
+  1220→      </Card>
+  1221→
+  1222→      <div className="flex flex-wrap items-center justify-end gap-2">
+  1223→        <Button variant="outline" onClick={onNewAnalysis}>
+  1224→          <Plus className="mr-1.5 h-4 w-4" />
+  1225→          Run Another
+  1226→        </Button>
+  1227→        <Button variant="outline" onClick={onExportCSV} title="Export analysis items as CSV">
+  1228→          <FileSpreadsheet className="mr-1.5 h-4 w-4" />
+  1229→          Export CSV
+  1230→        </Button>
+  1231→        <Button onClick={onDownload}>
+  1232→          <Download className="mr-1.5 h-4 w-4" />
+  1233→          Download PDF Report
+  1234→        </Button>
+  1235→      </div>
+  1236→    </motion.div>
+  1237→  );
+  1238→}
+  1239→
+  1240→function StatTile({
+  1241→  label,
+  1242→  value,
+  1243→  sub,
+  1244→  badge,
+  1245→}: {
+  1246→  label: string;
+  1247→  value: string;
+  1248→  sub?: string;
+  1249→  badge?: React.ReactNode;
+  1250→}) {
+  1251→  return (
+  1252→    <Card>
+  1253→      <CardContent className="p-4">
+  1254→        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+  1255→          {label}
+  1256→        </p>
+  1257→        <div className="mt-1 flex items-baseline gap-2">
+  1258→          <p className="text-xl font-bold capitalize">{value}</p>
+  1259→          {badge}
+  1260→        </div>
+  1261→        {sub && <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>}
+  1262→      </CardContent>
+  1263→    </Card>
+  1264→  );
+  1265→}
+  1266→

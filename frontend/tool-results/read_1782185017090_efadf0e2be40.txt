@@ -1,0 +1,748 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useState } from "react";
+     4→import { useAppStore } from "@/store/app-store";
+     5→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+     6→import { Button } from "@/components/ui/button";
+     7→import { Skeleton } from "@/components/ui/skeleton";
+     8→import { Badge } from "@/components/ui/badge";
+     9→import {
+    10→  Dialog,
+    11→  DialogContent,
+    12→  DialogDescription,
+    13→  DialogFooter,
+    14→  DialogHeader,
+    15→  DialogTitle,
+    16→} from "@/components/ui/dialog";
+    17→import {
+    18→  SentimentBadge,
+    19→  EmotionBadge,
+    20→  PlatformBadge,
+    21→  PremiumBadge,
+    22→} from "@/components/shared/badges";
+    23→import {
+    24→  SentimentPieChart,
+    25→  EmotionBarChart,
+    26→  SentimentGauge,
+    27→  WordCloud,
+    28→} from "@/components/shared/charts";
+    29→import {
+    30→  CONTENT_TYPES,
+    31→  getPlatform,
+    32→  getSentiment,
+    33→  getEmotion,
+    34→} from "@/lib/constants";
+    35→import { generateAnalysisReport, exportAnalysisCSV } from "@/lib/report";
+    36→import { buildShareUrl } from "@/lib/share";
+    37→import type { AnalysisResult } from "@/lib/analysis";
+    38→import { toast } from "sonner";
+    39→import { motion } from "framer-motion";
+    40→import {
+    41→  ArrowLeft,
+    42→  Download,
+    43→  Calendar,
+    44→  FileText,
+    45→  Link2,
+    46→  Loader2,
+    47→  Brain,
+    48→  Sparkles,
+    49→  FileSpreadsheet,
+    50→  Quote,
+    51→  TrendingUp,
+    52→  TrendingDown,
+    53→  Meh,
+    54→  Share2,
+    55→  Copy,
+    56→  Check,
+    57→  ExternalLink,
+    58→  Eye,
+    59→} from "lucide-react";
+    60→
+    61→interface AnalysisDetailData {
+    62→  id: string;
+    63→  userId: string;
+    64→  platform: string;
+    65→  contentType: string;
+    66→  title: string;
+    67→  sourceUrl: string | null;
+    68→  contentItems: { text: string; author?: string }[];
+    69→  results: AnalysisResult;
+    70→  overallSentiment: string;
+    71→  sentimentScore: number;
+    72→  itemCount: number;
+    73→  isPremium: boolean;
+    74→  createdAt: string;
+    75→}
+    76→
+    77→export function AnalysisDetail() {
+    78→  const selectedAnalysisId = useAppStore((s) => s.selectedAnalysisId);
+    79→  const setSelectedAnalysisId = useAppStore((s) => s.setSelectedAnalysisId);
+    80→  const setDashboardTab = useAppStore((s) => s.setDashboardTab);
+    81→
+    82→  const [analysis, setAnalysis] = useState<AnalysisDetailData | null>(null);
+    83→  const [loading, setLoading] = useState(true);
+    84→  const [notFound, setNotFound] = useState(false);
+    85→  const [downloading, setDownloading] = useState(false);
+    86→  const [shareOpen, setShareOpen] = useState(false);
+    87→  const [copied, setCopied] = useState(false);
+    88→
+    89→  useEffect(() => {
+    90→    if (!selectedAnalysisId) return;
+    91→    let cancelled = false;
+    92→    setLoading(true);
+    93→    setNotFound(false);
+    94→    (async () => {
+    95→      try {
+    96→        const res = await fetch(`/api/analyses/${selectedAnalysisId}`);
+    97→        if (!res.ok) {
+    98→          if (!cancelled) setNotFound(true);
+    99→          return;
+   100→        }
+   101→        const data = await res.json();
+   102→        if (!cancelled) setAnalysis(data.analysis);
+   103→      } catch {
+   104→        if (!cancelled) setNotFound(true);
+   105→      } finally {
+   106→        if (!cancelled) setLoading(false);
+   107→      }
+   108→    })();
+   109→    return () => {
+   110→      cancelled = true;
+   111→    };
+   112→  }, [selectedAnalysisId]);
+   113→
+   114→  function handleBack() {
+   115→    setSelectedAnalysisId(null);
+   116→  }
+   117→
+   118→  async function handleDownload() {
+   119→    if (!analysis) return;
+   120→    setDownloading(true);
+   121→    try {
+   122→      generateAnalysisReport({
+   123→        id: analysis.id,
+   124→        platform: analysis.platform,
+   125→        contentType: analysis.contentType,
+   126→        title: analysis.title,
+   127→        sourceUrl: analysis.sourceUrl,
+   128→        overallSentiment: analysis.overallSentiment,
+   129→        sentimentScore: analysis.sentimentScore,
+   130→        itemCount: analysis.itemCount,
+   131→        isPremium: analysis.isPremium,
+   132→        createdAt: analysis.createdAt,
+   133→        results: analysis.results,
+   134→      });
+   135→      toast.success("PDF report downloaded");
+   136→    } catch {
+   137→      toast.error("Failed to generate report");
+   138→    } finally {
+   139→      setDownloading(false);
+   140→    }
+   141→  }
+   142→
+   143→  function handleExportCSV() {
+   144→    if (!analysis) return;
+   145→    try {
+   146→      exportAnalysisCSV({
+   147→        id: analysis.id,
+   148→        title: analysis.title,
+   149→        platform: analysis.platform,
+   150→        contentType: analysis.contentType,
+   151→        createdAt: analysis.createdAt,
+   152→        results: analysis.results,
+   153→      });
+   154→      toast.success("CSV exported");
+   155→    } catch {
+   156→      toast.error("Failed to export CSV");
+   157→    }
+   158→  }
+   159→
+   160→  function handleShareOpen() {
+   161→    setCopied(false);
+   162→    setShareOpen(true);
+   163→  }
+   164→
+   165→  async function handleCopyShareLink() {
+   166→    if (!analysis) return;
+   167→    const url = buildShareUrl(analysis.id);
+   168→    try {
+   169→      await navigator.clipboard.writeText(url);
+   170→      setCopied(true);
+   171→      toast.success("Share link copied to clipboard");
+   172→      setTimeout(() => setCopied(false), 2000);
+   173→    } catch {
+   174→      // Fallback: select-and-copy prompt for older browsers
+   175→      toast.error("Couldn't copy automatically — copy the link manually");
+   176→    }
+   177→  }
+   178→
+   179→  if (!selectedAnalysisId) {
+   180→    return null;
+   181→  }
+   182→
+   183→  if (loading) {
+   184→    return <DetailSkeleton onBack={handleBack} />;
+   185→  }
+   186→
+   187→  if (notFound || !analysis) {
+   188→    return (
+   189→      <div className="space-y-4">
+   190→        <Button variant="ghost" onClick={handleBack}>
+   191→          <ArrowLeft className="mr-1.5 h-4 w-4" />
+   192→          Back
+   193→        </Button>
+   194→        <Card>
+   195→          <CardContent className="py-16 text-center">
+   196→            <p className="text-sm font-medium">Analysis not found</p>
+   197→            <p className="mt-1 text-sm text-muted-foreground">
+   198→              It may have been deleted or you don&apos;t have access.
+   199→            </p>
+   200→            <Button onClick={() => setDashboardTab("my-analyses")} className="mt-4">
+   201→              Back to My Analyses
+   202→            </Button>
+   203→          </CardContent>
+   204→        </Card>
+   205→      </div>
+   206→    );
+   207→  }
+   208→
+   209→  const p = getPlatform(analysis.platform);
+   210→  const Icon = p.icon;
+   211→  const sentiment = getSentiment(analysis.overallSentiment);
+   212→  const dominantEmotion = getEmotion(analysis.results.dominantEmotion);
+   213→  const contentTypeMeta = CONTENT_TYPES[analysis.contentType];
+   214→
+   215→  return (
+   216→    <div className="space-y-6">
+   217→      {/* Back */}
+   218→      <Button variant="ghost" onClick={handleBack} className="-ml-2">
+   219→        <ArrowLeft className="mr-1.5 h-4 w-4" />
+   220→        Back to list
+   221→      </Button>
+   222→
+   223→      {/* Header */}
+   224→      <motion.div
+   225→        initial={{ opacity: 0, y: 8 }}
+   226→        animate={{ opacity: 1, y: 0 }}
+   227→        className="relative overflow-hidden rounded-2xl border border-border bg-card"
+   228→      >
+   229→        <div className={`h-1.5 bg-gradient-to-r ${p.gradient}`} />
+   230→        <div className="p-6 sm:p-8">
+   231→          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+   232→            <div className="min-w-0 flex-1">
+   233→              <div className="flex flex-wrap items-center gap-2">
+   234→                <div
+   235→                  className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${p.gradient} text-white shadow-md`}
+   236→                >
+   237→                  <Icon className="h-5 w-5" />
+   238→                </div>
+   239→                <PlatformBadge platform={analysis.platform} />
+   240→                <Badge variant="outline" className="capitalize">
+   241→                  {contentTypeMeta?.label || analysis.contentType}
+   242→                </Badge>
+   243→                {analysis.isPremium && <PremiumBadge />}
+   244→              </div>
+   245→              <h1 className="mt-4 text-2xl font-bold tracking-tight">
+   246→                {analysis.title}
+   247→              </h1>
+   248→              <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+   249→                <span className="flex items-center gap-1">
+   250→                  <Calendar className="h-3.5 w-3.5" />
+   251→                  {new Date(analysis.createdAt).toLocaleString()}
+   252→                </span>
+   253→                <span className="flex items-center gap-1">
+   254→                  <FileText className="h-3.5 w-3.5" />
+   255→                  {analysis.itemCount} items analyzed
+   256→                </span>
+   257→                {analysis.sourceUrl && (
+   258→                  <a
+   259→                    href={analysis.sourceUrl}
+   260→                    target="_blank"
+   261→                    rel="noopener noreferrer"
+   262→                    className="flex items-center gap-1 text-primary hover:underline"
+   263→                  >
+   264→                    <Link2 className="h-3.5 w-3.5" />
+   265→                    Source
+   266→                  </a>
+   267→                )}
+   268→              </div>
+   269→            </div>
+   270→            <div className="flex flex-wrap gap-2">
+   271→              <Button
+   272→                onClick={handleShareOpen}
+   273→                variant="outline"
+   274→              >
+   275→                <Share2 className="mr-1.5 h-4 w-4" />
+   276→                Share
+   277→              </Button>
+   278→              <Button
+   279→                onClick={handleDownload}
+   280→                disabled={downloading}
+   281→                className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90"
+   282→              >
+   283→                {downloading ? (
+   284→                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+   285→                ) : (
+   286→                  <Download className="mr-1.5 h-4 w-4" />
+   287→                )}
+   288→                Download PDF
+   289→              </Button>
+   290→              <Button
+   291→                onClick={handleExportCSV}
+   292→                variant="outline"
+   293→              >
+   294→                <FileSpreadsheet className="mr-1.5 h-4 w-4" />
+   295→                Export CSV
+   296→              </Button>
+   297→            </div>
+   298→          </div>
+   299→        </div>
+   300→      </motion.div>
+   301→
+   302→      {/* Key metrics row */}
+   303→      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+   304→        <MetricTile
+   305→          label="Overall Sentiment"
+   306→          icon={
+   307→            analysis.overallSentiment === "positive" ? (
+   308→              <TrendingUp className="h-4 w-4" />
+   309→            ) : analysis.overallSentiment === "negative" ? (
+   310→              <TrendingDown className="h-4 w-4" />
+   311→            ) : (
+   312→              <Meh className="h-4 w-4" />
+   313→            )
+   314→          }
+   315→          color={sentiment.color}
+   316→        >
+   317→          <span className="capitalize">{analysis.overallSentiment}</span>
+   318→        </MetricTile>
+   319→        <MetricTile label="Sentiment Score" color={sentiment.color}>
+   320→          <span className="tabular-nums">
+   321→            {analysis.sentimentScore > 0 ? "+" : ""}
+   322→            {analysis.sentimentScore.toFixed(2)}
+   323→          </span>
+   324→        </MetricTile>
+   325→        <MetricTile label="Dominant Emotion" color={dominantEmotion.color}>
+   326→          <span className="flex items-center gap-1.5">
+   327→            <span>{dominantEmotion.emoji}</span>
+   328→            <span>{dominantEmotion.label}</span>
+   329→          </span>
+   330→        </MetricTile>
+   331→        <MetricTile label="Items Analyzed">
+   332→          <span className="tabular-nums">{analysis.itemCount}</span>
+   333→        </MetricTile>
+   334→      </div>
+   335→
+   336→      {/* Gauge + Summary */}
+   337→      <div className="grid gap-5 lg:grid-cols-3">
+   338→        <Card>
+   339→          <CardHeader>
+   340→            <CardTitle className="text-base">Sentiment Gauge</CardTitle>
+   341→            <CardDescription>Overall positivity score (-1 to +1)</CardDescription>
+   342→          </CardHeader>
+   343→          <CardContent>
+   344→            <SentimentGauge score={analysis.sentimentScore} />
+   345→          </CardContent>
+   346→        </Card>
+   347→        <Card className="lg:col-span-2">
+   348→          <CardHeader>
+   349→            <CardTitle className="flex items-center gap-2 text-base">
+   350→              <Sparkles className="h-4 w-4 text-primary" />
+   351→              AI-Generated Summary
+   352→            </CardTitle>
+   353→            <CardDescription>By the transformer model</CardDescription>
+   354→          </CardHeader>
+   355→          <CardContent>
+   356→            <p className="rounded-lg border border-border bg-muted/30 p-4 text-sm leading-relaxed">
+   357→              {analysis.results.summary}
+   358→            </p>
+   359→            <div className="mt-4">
+   360→              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+   361→                Key Insights
+   362→              </p>
+   363→              <ul className="mt-2 space-y-2">
+   364→                {analysis.results.insights.map((insight, i) => (
+   365→                  <li key={i} className="flex items-start gap-2 text-sm">
+   366→                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+   367→                    <span>{insight}</span>
+   368→                  </li>
+   369→                ))}
+   370→              </ul>
+   371→            </div>
+   372→          </CardContent>
+   373→        </Card>
+   374→      </div>
+   375→
+   376→      {/* Charts */}
+   377→      <div className="grid gap-5 lg:grid-cols-2">
+   378→        <Card>
+   379→          <CardHeader>
+   380→            <CardTitle className="text-base">Sentiment Distribution</CardTitle>
+   381→            <CardDescription>Percentage split across items</CardDescription>
+   382→          </CardHeader>
+   383→          <CardContent>
+   384→            <SentimentPieChart distribution={analysis.results.sentimentDistribution} />
+   385→          </CardContent>
+   386→        </Card>
+   387→        <Card>
+   388→          <CardHeader>
+   389→            <CardTitle className="text-base">Emotion Breakdown</CardTitle>
+   390→            <CardDescription>Count per detected emotion</CardDescription>
+   391→          </CardHeader>
+   392→          <CardContent>
+   393→            <EmotionBarChart distribution={analysis.results.emotionDistribution} />
+   394→          </CardContent>
+   395→        </Card>
+   396→      </div>
+   397→
+   398→      {/* Top keywords */}
+   399→      <Card>
+   400→        <CardHeader>
+   401→          <CardTitle className="flex items-center gap-2 text-base">
+   402→            <Brain className="h-4 w-4 text-primary" />
+   403→            Top Keywords
+   404→          </CardTitle>
+   405→          <CardDescription>
+   406→            Frequent terms, sized by frequency and colored by associated sentiment
+   407→          </CardDescription>
+   408→        </CardHeader>
+   409→        <CardContent className="space-y-4">
+   410→          {analysis.results.keywords.length === 0 ? (
+   411→            <p className="text-sm text-muted-foreground">No keywords extracted.</p>
+   412→          ) : (
+   413→            <>
+   414→              <WordCloud keywords={analysis.results.keywords} height={200} />
+   415→              <div className="flex flex-wrap gap-2 border-t border-border/50 pt-4">
+   416→                {analysis.results.keywords.map((k) => {
+   417→                  const s = getSentiment(k.sentiment);
+   418→                  return (
+   419→                    <span
+   420→                      key={k.word}
+   421→                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${s.bgClass}`}
+   422→                    >
+   423→                      <span>{k.word}</span>
+   424→                      <span className="text-[10px] opacity-70">×{k.count}</span>
+   425→                    </span>
+   426→                  );
+   427→                })}
+   428→              </div>
+   429→            </>
+   430→          )}
+   431→        </CardContent>
+   432→      </Card>
+   433→
+   434→      {/* Full item list */}
+   435→      <Card>
+   436→        <CardHeader>
+   437→          <CardTitle className="flex items-center gap-2 text-base">
+   438→            <Quote className="h-4 w-4 text-primary" />
+   439→            Analyzed Items
+   440→            <Badge variant="secondary" className="ml-1">
+   441→              {analysis.results.items.length}
+   442→            </Badge>
+   443→          </CardTitle>
+   444→          <CardDescription>
+   445→            Per-item sentiment, emotion, and score
+   446→          </CardDescription>
+   447→        </CardHeader>
+   448→        <CardContent>
+   449→          <div className="max-h-96 space-y-2 overflow-y-auto scrollbar-thin pr-1">
+   450→            {analysis.results.items.map((it, i) => {
+   451→              const s = getSentiment(it.sentiment);
+   452→              const e = getEmotion(it.emotion);
+   453→              const scorePct = ((it.score + 1) / 2) * 100;
+   454→              return (
+   455→                <div
+   456→                  key={i}
+   457→                  className="rounded-lg border border-border bg-card/60 p-3 transition-colors hover:bg-accent/30"
+   458→                >
+   459→                  <div className="flex items-start justify-between gap-3">
+   460→                    <div className="min-w-0 flex-1">
+   461→                      {it.author && (
+   462→                        <p className="text-[11px] font-medium text-muted-foreground">
+   463→                          @{it.author}
+   464→                        </p>
+   465→                      )}
+   466→                      <p className="text-sm leading-relaxed">{it.text}</p>
+   467→                    </div>
+   468→                    <div className="flex shrink-0 flex-col items-end gap-1">
+   469→                      <SentimentBadge sentiment={it.sentiment} />
+   470→                      <EmotionBadge emotion={it.emotion} />
+   471→                    </div>
+   472→                  </div>
+   473→                  <div className="mt-2.5 flex items-center gap-2">
+   474→                    <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+   475→                      <div
+   476→                        className="absolute inset-y-0 left-0 rounded-full"
+   477→                        style={{
+   478→                          width: `${scorePct}%`,
+   479→                          background: s.color,
+   480→                        }}
+   481→                      />
+   482→                    </div>
+   483→                    <span className="text-[11px] tabular-nums text-muted-foreground">
+   484→                      {it.score > 0 ? "+" : ""}
+   485→                      {it.score.toFixed(2)} • {e.emoji} {e.label}
+   486→                    </span>
+   487→                  </div>
+   488→                </div>
+   489→              );
+   490→            })}
+   491→            {analysis.results.items.length === 0 && (
+   492→              <p className="py-8 text-center text-sm text-muted-foreground">
+   493→                No item-level results available.
+   494→              </p>
+   495→            )}
+   496→          </div>
+   497→        </CardContent>
+   498→      </Card>
+   499→
+   500→      <div className="flex flex-wrap justify-end gap-2">
+   501→        <Button
+   502→          onClick={handleShareOpen}
+   503→          variant="outline"
+   504→        >
+   505→          <Share2 className="mr-1.5 h-4 w-4" />
+   506→          Share
+   507→        </Button>
+   508→        <Button
+   509→          onClick={handleExportCSV}
+   510→          variant="outline"
+   511→        >
+   512→          <FileSpreadsheet className="mr-1.5 h-4 w-4" />
+   513→          Export CSV
+   514→        </Button>
+   515→        <Button
+   516→          onClick={handleDownload}
+   517→          disabled={downloading}
+   518→          className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90"
+   519→        >
+   520→          {downloading ? (
+   521→            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+   522→          ) : (
+   523→            <Download className="mr-1.5 h-4 w-4" />
+   524→          )}
+   525→          Download PDF Report
+   526→        </Button>
+   527→      </div>
+   528→
+   529→      {/* Share Dialog */}
+   530→      <ShareDialog
+   531→        open={shareOpen}
+   532→        onOpenChange={setShareOpen}
+   533→        analysis={analysis}
+   534→        copied={copied}
+   535→        onCopy={handleCopyShareLink}
+   536→      />
+   537→    </div>
+   538→  );
+   539→}
+   540→
+   541→function ShareDialog({
+   542→  open,
+   543→  onOpenChange,
+   544→  analysis,
+   545→  copied,
+   546→  onCopy,
+   547→}: {
+   548→  open: boolean;
+   549→  onOpenChange: (open: boolean) => void;
+   550→  analysis: AnalysisDetailData | null;
+   551→  copied: boolean;
+   552→  onCopy: () => void;
+   553→}) {
+   554→  const shareUrl = analysis ? buildShareUrl(analysis.id) : "";
+   555→
+   556→  return (
+   557→    <Dialog open={open} onOpenChange={onOpenChange}>
+   558→      <DialogContent className="sm:max-w-md">
+   559→        <DialogHeader>
+   560→          <DialogTitle className="flex items-center gap-2">
+   561→            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm">
+   562→              <Share2 className="h-4 w-4" />
+   563→            </span>
+   564→            Share this analysis
+   565→          </DialogTitle>
+   566→          <DialogDescription>
+   567→            Generate a public, read-only link to this analysis report. Anyone
+   568→            with the link can view it — no login required.
+   569→          </DialogDescription>
+   570→        </DialogHeader>
+   571→
+   572→        <div className="space-y-4">
+   573→          {/* Link preview box */}
+   574→          <div className="rounded-lg border border-border bg-muted/40 p-3">
+   575→            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+   576→              Public share link
+   577→            </p>
+   578→            <div className="flex items-center gap-2">
+   579→              <code className="min-w-0 flex-1 truncate rounded bg-background px-2 py-1.5 font-mono text-[11px] text-foreground ring-1 ring-inset ring-border">
+   580→                {shareUrl}
+   581→              </code>
+   582→              <Button
+   583→                size="sm"
+   584→                onClick={onCopy}
+   585→                className="shrink-0 gap-1.5"
+   586→                variant={copied ? "secondary" : "default"}
+   587→              >
+   588→                {copied ? (
+   589→                  <>
+   590→                    <Check className="h-3.5 w-3.5" />
+   591→                    Copied
+   592→                  </>
+   593→                ) : (
+   594→                  <>
+   595→                    <Copy className="h-3.5 w-3.5" />
+   596→                    Copy
+   597→                  </>
+   598→                )}
+   599→              </Button>
+   600→            </div>
+   601→          </div>
+   602→
+   603→          {/* Info list */}
+   604→          <div className="space-y-2 rounded-lg bg-emerald-500/[0.04] p-3 ring-1 ring-inset ring-emerald-500/15">
+   605→            <div className="flex items-start gap-2 text-xs">
+   606→              <Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+   607→              <span className="text-muted-foreground">
+   608→                <span className="font-medium text-foreground">Read-only.</span>{" "}
+   609→                Recipients can view all charts and per-item sentiment but cannot
+   610→                edit or delete.
+   611→              </span>
+   612→            </div>
+   613→            <div className="flex items-start gap-2 text-xs">
+   614→              <Link2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+   615→              <span className="text-muted-foreground">
+   616→                <span className="font-medium text-foreground">Persistent.</span>{" "}
+   617→                The link works as long as the analysis exists in your account.
+   618→              </span>
+   619→            </div>
+   620→            <div className="flex items-start gap-2 text-xs">
+   621→              <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+   622→              <span className="text-muted-foreground">
+   623→                <span className="font-medium text-foreground">No signup.</span>{" "}
+   624→                Recipients see a polished report with a &quot;Try SentimentSense&quot;
+   625→                CTA — great for sharing insights with stakeholders or in demos.
+   626→              </span>
+   627→            </div>
+   628→          </div>
+   629→        </div>
+   630→
+   631→        <DialogFooter className="gap-2 sm:gap-2">
+   632→          <Button
+   633→            variant="outline"
+   634→            onClick={() => onOpenChange(false)}
+   635→            className="flex-1 sm:flex-none"
+   636→          >
+   637→            Close
+   638→          </Button>
+   639→          <Button
+   640→            onClick={() => {
+   641→              if (shareUrl) window.open(shareUrl, "_blank");
+   642→            }}
+   643→            variant="outline"
+   644→            className="flex-1 gap-1.5 sm:flex-none"
+   645→          >
+   646→            <ExternalLink className="h-3.5 w-3.5" />
+   647→            Open link
+   648→          </Button>
+   649→          <Button
+   650→            onClick={onCopy}
+   651→            className="flex-1 gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90 sm:flex-none"
+   652→          >
+   653→            {copied ? (
+   654→              <>
+   655→                <Check className="h-3.5 w-3.5" />
+   656→                Copied!
+   657→              </>
+   658→            ) : (
+   659→              <>
+   660→                <Copy className="h-3.5 w-3.5" />
+   661→                Copy link
+   662→              </>
+   663→            )}
+   664→          </Button>
+   665→        </DialogFooter>
+   666→      </DialogContent>
+   667→    </Dialog>
+   668→  );
+   669→}
+   670→
+   671→function MetricTile({
+   672→  label,
+   673→  children,
+   674→  icon,
+   675→  color,
+   676→}: {
+   677→  label: string;
+   678→  children: React.ReactNode;
+   679→  icon?: React.ReactNode;
+   680→  color?: string;
+   681→}) {
+   682→  return (
+   683→    <Card>
+   684→      <CardContent className="p-4">
+   685→        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+   686→          {label}
+   687→        </p>
+   688→        <div className="mt-1.5 flex items-center gap-1.5 text-lg font-bold" style={color ? { color } : undefined}>
+   689→          {icon}
+   690→          {children}
+   691→        </div>
+   692→      </CardContent>
+   693→    </Card>
+   694→  );
+   695→}
+   696→
+   697→function DetailSkeleton({ onBack }: { onBack: () => void }) {
+   698→  return (
+   699→    <div className="space-y-6">
+   700→      <Button variant="ghost" onClick={onBack} className="-ml-2">
+   701→        <ArrowLeft className="mr-1.5 h-4 w-4" />
+   702→        Back
+   703→      </Button>
+   704→      <Card>
+   705→        <CardContent className="p-6 sm:p-8">
+   706→          <Skeleton className="h-10 w-10 rounded-xl animate-pulse" />
+   707→          <Skeleton className="mt-4 h-7 w-2/3 animate-pulse" />
+   708→          <Skeleton className="mt-3 h-4 w-1/2 animate-pulse" />
+   709→        </CardContent>
+   710→      </Card>
+   711→      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+   712→        {Array.from({ length: 4 }).map((_, i) => (
+   713→          <Card key={i}>
+   714→            <CardContent className="p-4">
+   715→              <Skeleton className="h-3 w-20 animate-pulse" />
+   716→              <Skeleton className="mt-2 h-6 w-16 animate-pulse" />
+   717→            </CardContent>
+   718→          </Card>
+   719→        ))}
+   720→      </div>
+   721→      <div className="grid gap-5 lg:grid-cols-3">
+   722→        <Card>
+   723→          <CardContent className="p-6">
+   724→            <Skeleton className="h-4 w-32 animate-pulse" />
+   725→            <Skeleton className="mt-4 h-40 w-full animate-pulse" />
+   726→          </CardContent>
+   727→        </Card>
+   728→        <Card className="lg:col-span-2">
+   729→          <CardContent className="p-6">
+   730→            <Skeleton className="h-4 w-32 animate-pulse" />
+   731→            <Skeleton className="mt-4 h-32 w-full animate-pulse" />
+   732→          </CardContent>
+   733→        </Card>
+   734→      </div>
+   735→      <div className="grid gap-5 lg:grid-cols-2">
+   736→        {Array.from({ length: 2 }).map((_, i) => (
+   737→          <Card key={i}>
+   738→            <CardContent className="p-6">
+   739→              <Skeleton className="h-4 w-32 animate-pulse" />
+   740→              <Skeleton className="mt-4 h-60 w-full animate-pulse" />
+   741→            </CardContent>
+   742→          </Card>
+   743→        ))}
+   744→      </div>
+   745→    </div>
+   746→  );
+   747→}
+   748→
