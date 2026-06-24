@@ -3,24 +3,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.database import connect_db, close_db
-from app.services.user_service import ensure_admin_exists
-from app.routes import auth, analysis, subscription, admin
+from app.routes import analysis
 
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await connect_db()
-    await ensure_admin_exists(settings.admin_email, settings.admin_password)
     try:
         from ml.model_manager import get_model_manager
         get_model_manager().load_models()
     except Exception:
         pass
     yield
-    await close_db()
 
 
 app = FastAPI(
@@ -38,10 +33,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router, prefix="/api")
 app.include_router(analysis.router, prefix="/api")
-app.include_router(subscription.router, prefix="/api")
-app.include_router(admin.router, prefix="/api")
 
 
 @app.get("/")
@@ -57,12 +49,9 @@ async def root():
 @app.get("/api/health")
 async def health():
     from ml.model_manager import get_model_manager
-    from app.database import is_db_connected
 
     manager = get_model_manager()
-    db_ok = is_db_connected()
     return {
-        "status": "healthy" if db_ok else "degraded",
-        "database": "connected" if db_ok else "disconnected",
+        "status": "healthy",
         "ml_models_loaded": manager.is_ready(),
     }
