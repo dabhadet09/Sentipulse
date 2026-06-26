@@ -1,10 +1,10 @@
-# SentiPulse — ML Sentiment & Emotion Analysis Platform
+# SentimentSense — ML Sentiment & Emotion Analysis Platform
 
 **Final Year Project** | Transformer-based analysis for YouTube, Reddit, X (Twitter), and Instagram
 
 ## Overview
 
-SentiPulse is a full-stack machine learning application that performs **sentiment analysis** and **emotion detection** on social media content using fine-tuned Transformer models (DistilBERT, RoBERTa, BERT, MuRIL, DistilRoBERTa).
+SentimentSense is a full-stack machine learning application that performs **sentiment analysis** and **emotion detection** on social media content using fine-tuned Transformer models (DistilBERT, RoBERTa, BERT, MuRIL, DistilRoBERTa).
 
 ### Key Features
 
@@ -22,7 +22,6 @@ SentiPulse is a full-stack machine learning application that performs **sentimen
 |-------|-----------|
 | Frontend | React 18, Vite, Recharts, Axios |
 | Backend | Python, FastAPI, Uvicorn |
-| Database | MongoDB (Motor async driver) |
 | ML/NLP | PyTorch, Hugging Face Transformers, scikit-learn |
 | Auth | JWT (python-jose), bcrypt |
 | Reports | ReportLab, Matplotlib |
@@ -45,7 +44,6 @@ sentipulse/
 │   ├── app/
 │   │   ├── main.py              # FastAPI entry point
 │   │   ├── config.py            # Environment settings
-│   │   ├── database.py          # MongoDB connection
 │   │   ├── routes/              # API endpoints
 │   │   ├── services/            # Business logic
 │   │   ├── schemas/             # Pydantic models
@@ -73,23 +71,13 @@ sentipulse/
 
 - Python 3.10+
 - Node.js 18+
-- MongoDB (local or Atlas)
+- Supabase Account
 
-### 1. MongoDB Setup
+### 1. Supabase Setup
 
-**Recommended:** [MongoDB Atlas](docs/01-MONGODB-ATLAS-SETUP.md) (free cloud — no local install)
-
-```bash
-# Test Atlas/local connection after configuring .env
-cd backend
-python scripts/test_mongodb.py
-```
-
-**Or local MongoDB:**
-```bash
-mongod
-# MONGODB_URL=mongodb://localhost:27017
-```
+1. Create a free project on [Supabase](https://supabase.com).
+2. Get your `SUPABASE_URL` and `SUPABASE_KEY`.
+3. Add them to your `.env` file.
 
 ### 2. Backend Setup
 
@@ -198,7 +186,7 @@ jupyter notebook ml/notebooks/SentiPulse_ML_Analysis.ipynb
 ### Architecture Diagram (for report)
 
 ```
-User → React Frontend → FastAPI Backend → MongoDB
+User → React Frontend → FastAPI Backend → Supabase
                               ↓
                     Transformer Models (Hugging Face)
                     ├── DistilBERT (Sentiment)
@@ -218,7 +206,6 @@ User → React Frontend → FastAPI Backend → MongoDB
 
 | Doc | Description |
 |-----|-------------|
-| [01 — MongoDB Atlas Setup](docs/01-MONGODB-ATLAS-SETUP.md) | Cloud database configuration |
 | [02 — Jupyter Notebook](docs/02-JUPYTER-NOTEBOOK.md) | ML demo for viva |
 | [03 — Synopsis](docs/03-SYNOPSIS.md) | Short college synopsis (1–2 pages) |
 | [03 — Project Report](docs/03-PROJECT-REPORT.md) | Full final year report |

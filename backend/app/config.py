@@ -8,8 +8,6 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 1440
 
-    mongodb_url: str = "mongodb://localhost:27017"
-    database_name: str = "sentipulse"
 
     admin_email: str = "admin@sentipulse.com"
     admin_password: str = "Admin@123456"
