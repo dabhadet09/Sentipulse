@@ -70,14 +70,7 @@ export function AuthPages() {
                   </div>
                 ))}
               </div>
-              <div className="mt-10 rounded-xl bg-white/10 p-4 backdrop-blur">
-                <p className="text-xs font-medium text-emerald-50">
-                  Final Year Project
-                </p>
-                <p className="mt-1 text-sm font-semibold">
-                  Group No 38 — Computer Engineering
-                </p>
-              </div>
+
             </div>
           </div>
 
@@ -126,7 +119,7 @@ export function AuthPages() {
                   )}
                 </div>
 
-                <Separator className="my-6" />
+                {/* <Separator className="my-6" />
                 <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
                   <div className="flex items-start gap-2">
                     <GraduationCap className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -145,7 +138,7 @@ export function AuthPages() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
           </div>

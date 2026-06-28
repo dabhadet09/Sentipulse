@@ -192,7 +192,7 @@ export function LandingPage() {
               className="mt-10 flex flex-col items-center gap-3"
             >
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Join 50+ researchers &amp; marketers
+                Join 50+ researchers &amp; marketers
               </p>
               <div className="flex items-center -space-x-2" role="group" aria-label="Sample users">
                 {[
@@ -622,67 +622,7 @@ export function LandingPage() {
         </section>
 
         {/* Team / Group */}
-        <section className="border-t border-border bg-gradient-to-b from-card/50 to-background">
-          <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-            <div className="rounded-3xl border border-border bg-card p-8 text-center shadow-sm sm:p-12">
-              <Badge className="mb-4 gap-1.5 border-0 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
-                <GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />
-                Final Year Project
-              </Badge>
-              <h2 className="text-3xl font-bold tracking-tight">
-                Developed by{" "}
-                <span className="gradient-text">Group No {GROUP_INFO.groupNumber}</span>
-              </h2>
-              <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-                A comprehensive sentiment and emotion analysis dashboard built
-                as a final year college project, combining full-stack web
-                development with machine learning.
-              </p>
 
-              {/* About the project — tech subtitle row */}
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-                {["Next.js 16", "Prisma ORM", "Transformer NLP"].map((tech) => (
-                  <Badge
-                    key={tech}
-                    variant="outline"
-                    className="border-border/60 bg-background/50 text-xs font-medium text-muted-foreground"
-                  >
-                    {tech}
-                  </Badge>
-                ))}
-              </div>
-
-              <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                {GROUP_INFO.members.map((member) => {
-                  const initials = member
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2);
-                  return (
-                    <div
-                      key={member}
-                      className="group rounded-xl border border-border/60 bg-background/50 p-4 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:bg-card hover:shadow-lg hover:shadow-primary/10"
-                    >
-                      <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-lg font-bold text-white shadow-md shadow-emerald-500/20 transition-transform group-hover:scale-105" aria-label={`${member} avatar`}>
-                        <span className="sr-only">{member}</span>
-                        <span aria-hidden="true">{initials}</span>
-                      </div>
-                      <p className="text-base font-semibold">{member}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        Final Year Student
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground/70">
-                        Computer Engineering
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* CTA */}
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
@@ -1272,42 +1212,42 @@ const PLATFORM_SHOWCASE: {
   /** Small pill accent color for content type badges */
   pillClass: string;
 }[] = [
-  {
-    name: "YouTube",
-    description: "Analyze video comments and live stream chats in real-time.",
-    contentTypes: ["Video", "Livestream"],
-    icon: Youtube,
-    gradient: "from-red-500 to-rose-600",
-    hoverRing: "group-hover:border-red-500/40",
-    pillClass: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
-  },
-  {
-    name: "Reddit",
-    description: "Deep-dive into discussion threads and community sentiment.",
-    contentTypes: ["Discussion"],
-    icon: MessageCircle,
-    gradient: "from-orange-500 to-amber-600",
-    hoverRing: "group-hover:border-orange-500/40",
-    pillClass:
-      "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
-  },
-  {
-    name: "X (Twitter)",
-    description: "Track tweet sentiment and reply threads across the network.",
-    contentTypes: ["Post"],
-    icon: Twitter,
-    gradient: "from-foreground to-muted-foreground",
-    hoverRing: "group-hover:border-foreground/40",
-    pillClass: "bg-foreground/10 text-foreground border-foreground/20",
-  },
-  {
-    name: "Instagram",
-    description: "Analyze reel comments and post engagement from your audience.",
-    contentTypes: ["Reel", "Post"],
-    icon: Instagram,
-    gradient: "from-pink-500 to-fuchsia-600",
-    hoverRing: "group-hover:border-pink-500/40",
-    pillClass:
-      "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20",
-  },
-];
+    {
+      name: "YouTube",
+      description: "Analyze video comments and live stream chats in real-time.",
+      contentTypes: ["Video", "Livestream"],
+      icon: Youtube,
+      gradient: "from-red-500 to-rose-600",
+      hoverRing: "group-hover:border-red-500/40",
+      pillClass: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+    },
+    {
+      name: "Reddit",
+      description: "Deep-dive into discussion threads and community sentiment.",
+      contentTypes: ["Discussion"],
+      icon: MessageCircle,
+      gradient: "from-orange-500 to-amber-600",
+      hoverRing: "group-hover:border-orange-500/40",
+      pillClass:
+        "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
+    },
+    {
+      name: "X (Twitter)",
+      description: "Track tweet sentiment and reply threads across the network.",
+      contentTypes: ["Post"],
+      icon: Twitter,
+      gradient: "from-foreground to-muted-foreground",
+      hoverRing: "group-hover:border-foreground/40",
+      pillClass: "bg-foreground/10 text-foreground border-foreground/20",
+    },
+    {
+      name: "Instagram",
+      description: "Analyze reel comments and post engagement from your audience.",
+      contentTypes: ["Reel", "Post"],
+      icon: Instagram,
+      gradient: "from-pink-500 to-fuchsia-600",
+      hoverRing: "group-hover:border-pink-500/40",
+      pillClass:
+        "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20",
+    },
+  ];

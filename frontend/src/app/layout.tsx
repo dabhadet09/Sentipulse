@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SentimentSense — AI Sentiment & Emotion Analytics | Group No 38",
+  title: "SentimentSense — AI Sentiment & Emotion Analytics",
   description:
     "Advanced sentiment and emotion analysis dashboard for YouTube, Reddit, X, and Instagram. Powered by fine-tuned transformer models.",
   keywords: [
